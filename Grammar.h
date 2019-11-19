@@ -61,8 +61,10 @@ public:
 	{
 		if (!N->findChar(start)) {
 			std::ostringstream error;
-			error << "Start character '" << start
-			      << "' not present in the Non-terminals alphabet.";
+			error << "Start character '";
+			start.print(error);
+			error << "' not present in the Non-terminals alphabet.";
+
 			throw std::invalid_argument(error.str());
 		}
 
