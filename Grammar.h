@@ -55,7 +55,8 @@ protected:
 	std::vector<Rule<C>> rules;
 
 public:
-	GrammarTouple(decltype(N) N, decltype(T) T, C start, decltype(rules) rules)
+	GrammarTouple(decltype(N) N, decltype(T) T, C const& start,
+	              decltype(rules) rules)
 	    : N(N), T(T), start(start), rules(rules)
 	{
 		if (!N->findChar(start)) {
@@ -77,7 +78,7 @@ public:
 template <typename C> struct CFGrammarTouple : public GrammarTouple<C>
 {
 	CFGrammarTouple(decltype(GrammarTouple<C>::N) N,
-	                decltype(GrammarTouple<C>::T) T, C start,
+	                decltype(GrammarTouple<C>::T) T, C const& start,
 	                decltype(GrammarTouple<C>::rules) rules)
 	    : GrammarTouple<C>(N, T, start, rules)
 	{
