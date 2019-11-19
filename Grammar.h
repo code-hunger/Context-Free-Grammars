@@ -39,8 +39,8 @@ template <typename C> struct Rule
 template <typename C>
 bool pairwiseDistinct(Alphabet<C> const& A, Alphabet<C> const& B)
 {
-	return std::all_of(begin(A), end(A),
-	                   [&B](const C* c) { return !B.findChar(c); });
+	return std::all_of(A.begin(), A.end(),
+	                   [&B](const C* c) { return !B.findChar(*c); });
 }
 
 template <typename C> class GrammarTouple

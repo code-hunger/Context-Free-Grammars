@@ -47,9 +47,9 @@ template <typename C> class Alphabet
 		C_ptr_vec rawified{};
 		rawified.reserve(chars.size());
 		for (unique_ptr<C>& c : chars) {
-			if (std::find_if(begin(rawified), end(rawified), [&c](const C* b) {
-				    return *c == *b;
-			    }) == end(rawified))
+			if (std::find_if(std::begin(rawified), std::end(rawified),
+			                 [&c](const C* b) { return *c == *b; }) ==
+			    std::end(rawified))
 				rawified.push_back(c.release());
 		}
 		return rawified;
@@ -65,18 +65,25 @@ public:
 
 	const C* findChar(C const& c) const
 	{
-		auto what_found = std::find_if(chars.begin(), end(chars),
-		                               [c](const C* x) { return *x == c; });
+		auto what_found =
+		    std::find_if(begin(), end(), [c](const C* x) { return *x == c; });
 
-		return what_found == end(chars) ? nullptr : *what_found;
+		return what_found == end() ? nullptr : *what_found;
 	}
 
-	unique_ptr<Alphabet> operator+(Alphabet const&) const;
+	Alphabet operator+(Alphabet const&) const
+	{
+		throw std::runtime_error("Union operation unimplemented.");
+	}
+
 	bool subsetOf(Alphabet const& other)
 	{
-		return std::all_of(begin(chars), end(chars),
+		return std::all_of(begin(), end(),
 		                   [&other](auto c) { return other.findChar(c); });
 	}
+
+	auto begin() const { return std::begin(chars); }
+	auto end() const { return std::end(chars); }
 
 	~Alphabet()
 	{
