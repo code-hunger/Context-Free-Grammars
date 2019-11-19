@@ -49,8 +49,7 @@ template <typename C> class GrammarTouple
 
 protected:
 	const SharedAlphabet N, T;
-
-	const Alphabet<C> N_union_T = N + T;
+	const Alphabet<C> N_union_T = (*N) + (*T);
 
 	C start;
 	std::vector<Rule<C>> rules;
