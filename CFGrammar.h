@@ -5,32 +5,14 @@
 #include <algorithm>
 
 #include <memory>
-#include <string>
 #include <vector>
 
 namespace context_free {
-
-using std::string;
-using std::unique_ptr;
 
 template <typename T, typename P> static bool all_of(T container, P predicate)
 {
 	return std::all_of(container.begin(), container.end(), predicate);
 }
-
-struct Grammar
-{
-	virtual bool contains(string) const = 0;
-
-	virtual unique_ptr<Grammar> union_with(Grammar const&) const = 0;
-	virtual unique_ptr<Grammar> concat_with(Grammar const&) const = 0;
-	virtual unique_ptr<Grammar> star() const = 0;
-
-	virtual bool empty() const = 0;
-	virtual bool infinite() const = 0;
-
-	virtual ~Grammar() = default;
-};
 
 template <typename C> struct Rule
 {
