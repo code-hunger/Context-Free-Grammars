@@ -72,6 +72,11 @@ public:
 	}
 
 	unique_ptr<Alphabet> operator+(Alphabet const&) const;
+	bool subsetOf(Alphabet const& other)
+	{
+		return std::all_of(begin(chars), end(chars),
+		                   [&other](auto c) { return other.findChar(c); });
+	}
 
 	~Alphabet()
 	{
