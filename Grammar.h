@@ -13,6 +13,11 @@ namespace context_free {
 using std::string;
 using std::unique_ptr;
 
+template <typename T, typename P> static bool all_of(T container, P predicate)
+{
+	return std::all_of(container.begin(), container.end(), predicate);
+}
+
 struct Grammar
 {
 	virtual bool contains(string) const = 0;
@@ -39,22 +44,19 @@ template <typename C> struct Rule
 template <typename C>
 bool pairwiseDistinct(Alphabet<C> const& A, Alphabet<C> const& B)
 {
-	return std::all_of(A.begin(), A.end(),
-	                   [&B](const C* c) { return !B.findChar(*c); });
+	return all_of(A, [&B](const C* c) { return !B.findChar(*c); });
 }
 
-template <typename C> class GrammarTouple
+template <typename C> struct GrammarTouple
 {
 	using SharedAlphabet = shared_ptr<Alphabet<C>>;
 
-protected:
 	const SharedAlphabet N, T;
 	const Alphabet<C> N_union_T = (*N) + (*T);
 
-	C start;
-	std::vector<Rule<C>> rules;
+	const C start;
+	const std::vector<Rule<C>> rules;
 
-public:
 	GrammarTouple(decltype(N) N, decltype(T) T, C const& start,
 	              decltype(rules) rules)
 	    : N(N), T(T), start(start), rules(rules)
@@ -75,24 +77,22 @@ public:
 	};
 };
 
-template <typename C> struct CFGrammarTouple : public GrammarTouple<C>
+template <typename C> struct CFGrammarTouple : GrammarTouple<C>
 {
 	CFGrammarTouple(decltype(GrammarTouple<C>::N) N,
 	                decltype(GrammarTouple<C>::T) T, C const& start,
 	                decltype(GrammarTouple<C>::rules) rules)
 	    : GrammarTouple<C>(N, T, start, rules)
 	{
-		if (!std::all_of(begin(rules), end(rules), [&N](auto const& rule) {
-			    return N.findChar(rule.from);
-		    })) {
+		if (!all_of(rules,
+		            [&N](auto& rule) { return N.findChar(rule.from); })) {
 			throw std::invalid_argument(
 			    "All rules must satisfy N.findChar(rule.from) != nullptr");
 		}
 
-		if (!std::all_of(begin(rules), end(rules),
-		                 [& N_union_T = this->N_union_T](auto const& rule) {
-			                 return rule.to.alphabet.subsetOf(N_union_T);
-		                 })) {
+		if (!all_of(rules, [& N_union_T = this->N_union_T](auto& rule) {
+			    return rule.to.alphabet.subsetOf(N_union_T);
+		    })) {
 			throw std::invalid_argument("The 'to' part of all rules must be a "
 			                            "string from the alphabet union N+T.");
 		}
