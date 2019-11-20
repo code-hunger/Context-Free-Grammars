@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cassert>
 #include <memory>
 #include <sstream>
 #include <vector>
@@ -8,6 +9,12 @@
 namespace context_free {
 
 using std::unique_ptr;
+
+template <typename T, typename P>
+static bool all_of(T const& container, P predicate)
+{
+	return std::all_of(container.begin(), container.end(), predicate);
+}
 
 struct Char
 {
@@ -33,7 +40,31 @@ struct LetterChar : Char
 	}
 };
 
-template <typename C> class Alphabet
+template <typename C> struct AlphabetLike
+{
+	virtual const C* findChar(C const&) const = 0;
+	virtual bool subsetOf(AlphabetLike const& other) const = 0;
+	virtual void print(std::ostream&) const = 0;
+
+	AlphabetLike() = default;
+	AlphabetLike(AlphabetLike<C>&&) = default;
+	AlphabetLike(AlphabetLike<C> const&) = delete;
+
+	virtual ~AlphabetLike() {}
+};
+
+template <typename C>
+std::vector<unique_ptr<C>> stringToPtrVec(std::string string)
+{
+	std::vector<unique_ptr<C>> vector{string.size()};
+
+	std::transform(begin(string), end(string), begin(vector),
+	               [](char c) { return std::make_unique<C>(c); });
+
+	return vector;
+}
+
+template <typename C> class Alphabet : public AlphabetLike<C>
 {
 	/*
 	 * An immutable object representing a finite alphabet
@@ -59,11 +90,14 @@ public:
 	Alphabet(std::vector<unique_ptr<C>>&& chars)
 	    : chars(rawifyChars(std::move(chars)))
 	{
+		for_each([](const C* c) { assert(c != nullptr); });
 	}
+	explicit Alphabet(std::string string)
+	    : Alphabet(stringToPtrVec<C>(string)){};
 
 	size_t size() const { return chars.size(); }
 
-	const C* findChar(C const& c) const
+	const C* findChar(C const& c) const override
 	{
 		auto what_found =
 		    std::find_if(begin(), end(), [c](const C* x) { return *x == c; });
@@ -76,14 +110,24 @@ public:
 		throw std::runtime_error("Union operation unimplemented.");
 	}
 
-	bool subsetOf(Alphabet const& other)
+	bool subsetOf(AlphabetLike<C> const& other) const override
 	{
-		return std::all_of(begin(), end(),
-		                   [&other](auto c) { return other.findChar(c); });
+		return all_of(*this,
+		              [&other](const C* c) { return other.findChar(*c); });
 	}
 
 	auto begin() const { return std::begin(chars); }
 	auto end() const { return std::end(chars); }
+
+	template <typename P> void for_each(P const& p) const
+	{
+		std::for_each(begin(), end(), p);
+	}
+
+	void print(std::ostream& out) const override
+	{
+		for_each([&out](const C* c) { c->print(out); });
+	}
 
 	~Alphabet()
 	{
