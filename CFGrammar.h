@@ -9,41 +9,30 @@
 
 namespace context_free {
 
-template <typename T, typename P> static bool all_of(T container, P predicate)
-{
-	return std::all_of(container.begin(), container.end(), predicate);
-}
-
 template <typename C> struct Rule
 {
-	const C* const from;
+	const C& from;
 
 	const AlphaString<C> to;
 
-	Rule(C const& from, AlphaString<C>&& to) : from(&from), to(std::move(to)) {}
+	Rule(C const& from, AlphaString<C>&& to) : from(from), to(std::move(to)) {}
 };
-
-template <typename C>
-bool pairwiseDistinct(Alphabet<C> const& A, Alphabet<C> const& B)
-{
-	return all_of(A, [&B](const C* c) { return !B.findChar(*c); });
-}
 
 template <typename C> struct GrammarTouple
 {
 	using SharedAlphabet = shared_ptr<Alphabet<C>>;
 
-	const SharedAlphabet N, T;
-	const Alphabet<C> N_union_T = (*N) + (*T);
+	const shared_ptr<AlphabetTouple<C>> alphabets;
 
-	const C start;
+	const C* start;
 	const std::vector<Rule<C>> rules;
 
-	GrammarTouple(decltype(N) N, decltype(T) T, C const& start,
+	GrammarTouple(decltype(alphabets) alphabets, C const& start,
 	              decltype(rules) rules)
-	    : N(N), T(T), start(start), rules(rules)
+	    : alphabets(alphabets), start(alphabets->N->findChar(start)),
+	      rules(rules)
 	{
-		if (!N->findChar(start)) {
+		if (!this->start) {
 			std::ostringstream error;
 			error << "Start character '";
 			start.print(error);
@@ -51,29 +40,27 @@ template <typename C> struct GrammarTouple
 
 			throw std::invalid_argument(error.str());
 		}
-
-		if (!pairwiseDistinct(*N, *T)) {
-			throw std::invalid_argument("The Terminals and the Non-terminals "
-			                            "alphabets must be pairwise distinct.");
-		}
 	};
+
+	GrammarTouple(GrammarTouple const&) = delete;
+	auto operator=(GrammarTouple const&) = delete;
 };
 
 template <typename C> struct CFGrammarTouple : GrammarTouple<C>
 {
-	CFGrammarTouple(decltype(GrammarTouple<C>::N) N,
-	                decltype(GrammarTouple<C>::T) T, C const& start,
-	                decltype(GrammarTouple<C>::rules) rules)
-	    : GrammarTouple<C>(N, T, start, rules)
+	CFGrammarTouple(decltype(GrammarTouple<C>::alphabets) alphabets,
+	                C const& start, decltype(GrammarTouple<C>::rules) rules)
+	    : GrammarTouple<C>(alphabets, start, rules)
 	{
-		if (!all_of(rules,
-		            [&N](auto& rule) { return N.findChar(rule.from); })) {
+		if (!all_of(rules, [& N = *alphabets->N](auto& rule) {
+			    return N.findChar(rule.from);
+		    })) {
 			throw std::invalid_argument(
 			    "All rules must satisfy N.findChar(rule.from) != nullptr");
 		}
 
-		if (!all_of(rules, [& N_union_T = this->N_union_T](auto& rule) {
-			    return rule.to.alphabet.subsetOf(N_union_T);
+		if (!all_of(rules, [& alphabets = *alphabets](auto& rule) {
+			    return rule.to.alphabet->subsetOf(alphabets);
 		    })) {
 			throw std::invalid_argument("The 'to' part of all rules must be a "
 			                            "string from the alphabet union N+T.");
