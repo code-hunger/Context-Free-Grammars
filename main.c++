@@ -1,41 +1,30 @@
 #include "AlphaString.h"
+#include "CFGrammar.h"
+#include "CFParser.h"
 
 #include <iostream>
 
 using namespace context_free;
 
-std::vector<unique_ptr<LetterChar>> english()
+auto toSharedAlphabet(std::string const& string)
 {
-	using std::make_unique;
-
-	const std::string letters{"abcdefghijklmnopqrstuvwxyz"};
-
-	std::vector<unique_ptr<LetterChar>> somechars;
-
-	std::transform(begin(letters), end(letters), std::back_inserter(somechars),
-	               [](char c) { return make_unique<LetterChar>(c); });
-
-	return somechars;
+	return std::make_shared<Alphabet<LetterChar>>(string);
 }
 
 int main()
 {
-	auto mylphabet = std::make_shared<Alphabet<LetterChar>>(english());
+	std::string terminals = "abcdefghijklmnopqrstuvwxyz",
+	            variables = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-	std::string x;
-	getline(std::cin, x);
+	auto another =
+	    parseGrammar(std::cin, std::make_shared<AlphabetTouple<LetterChar>>(
+	                               toSharedAlphabet(variables),
+	                               toSharedAlphabet(terminals)));
 
-	try {
-		auto mystr = AlphaString<LetterChar>::parseString(mylphabet, x);
-		mystr.print(std::cout);
-		std::cout << std::endl;
-	} catch (const std::invalid_argument& e) {
-		std::cout << "Couldn't parse the string '" << x << "' :(" << std::endl;
-		std::cout << "Got error: " << e.what() << std::endl;
-	}
+	another.alphabets->N->print(std::cout);
+	another.alphabets->T->print(std::cout);
 
 	std::cout << "\nBye!" << std::endl;
 
 	return 0;
 }
-
