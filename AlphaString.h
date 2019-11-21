@@ -24,8 +24,8 @@ template <typename C> struct AlphaString
 
 	size_t size() const;
 
-	static AlphaString<LetterChar>
-	parseString(shared_ptr<Alphabet<LetterChar>>, std::string const&);
+	static AlphaString<LetterChar> parseString(shared_ptr<Alphabet<LetterChar>>,
+	                                           std::string const&);
 
 	static AlphaString<C> parseString(shared_ptr<AlphabetLike<C>> alphabet,
 	                                  std::string const& str)
@@ -53,5 +53,12 @@ private:
 	{
 	}
 };
+
+template <typename C>
+std::ostream& operator<<(std::ostream& out, AlphaString<C> const& string)
+{
+	string.print(out);
+	return out;
+}
 
 } // namespace context_free

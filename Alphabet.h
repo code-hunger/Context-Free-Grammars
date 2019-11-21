@@ -40,6 +40,12 @@ struct LetterChar : Char
 	}
 };
 
+inline std::ostream& operator<<(std::ostream& out, LetterChar const& c)
+{
+	c.print(out);
+	return out;
+}
+
 template <typename C> struct AlphabetLike
 {
 	virtual const C* findChar(C const&) const = 0;
@@ -134,6 +140,13 @@ public:
 		for_each([](const C* c) { delete c; });
 	}
 };
+
+template <typename C>
+std::ostream& operator<<(std::ostream& out, AlphabetLike<C> const& alphabet)
+{
+	alphabet.print(out);
+	return out;
+}
 
 template <typename C>
 bool pairwiseDistinct(Alphabet<C> const& A, Alphabet<C> const& B)

@@ -16,15 +16,22 @@ int main()
 	std::string terminals = "abcdefghijklmnopqrstuvwxyz",
 	            variables = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-	auto another =
+	CFGrammarTouple grammar =
 	    parseGrammar(std::cin, std::make_shared<AlphabetTouple<LetterChar>>(
 	                               toSharedAlphabet(variables),
 	                               toSharedAlphabet(terminals)));
 
-	another.alphabets->N->print(std::cout);
-	another.alphabets->T->print(std::cout);
+	auto& alphabets = grammar.alphabets;
 
-	std::cout << "\nBye!" << std::endl;
+	std::cout << "Non-termianls: " << *alphabets->N << std::endl;
+	std::cout << "Termianls: " << *alphabets->T << std::endl;
+
+	for (auto& rule : grammar.rules) {
+		std::cout << "The grammar has a rule from " << rule.from << " to "
+		          << rule.to << std::endl;
+	}
+
+	std::cout << "Bye!" << std::endl;
 
 	return 0;
 }
