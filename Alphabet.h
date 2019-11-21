@@ -60,7 +60,7 @@ template <typename C> struct AlphabetLike
 };
 
 template <typename C>
-std::vector<unique_ptr<C>> stringToPtrVec(std::string string)
+std::vector<unique_ptr<C>> stringToPtrVec(std::string const& string)
 {
 	std::vector<unique_ptr<C>> vector{string.size()};
 
@@ -79,6 +79,8 @@ template <typename C> class Alphabet : public AlphabetLike<C>
 
 	const C_ptr_vec chars{};
 
+	static std::shared_ptr<Alphabet<C>> emptyAlphabet;
+
 	static C_ptr_vec rawifyChars(std::vector<unique_ptr<C>>&& chars)
 	{
 		C_ptr_vec rawified{};
@@ -92,14 +94,33 @@ template <typename C> class Alphabet : public AlphabetLike<C>
 		return rawified;
 	}
 
+	enum DummyEmpty { DummyEmpty };
+
+	Alphabet(enum DummyEmpty) : chars{} {}
+
 public:
 	Alphabet(std::vector<unique_ptr<C>>&& chars)
 	    : chars(rawifyChars(std::move(chars)))
 	{
-		for_each([](const C* c) { assert(c != nullptr); });
+		if (chars.size() == 0)
+			throw std::invalid_argument(
+			    "The empty alphabet must be constructed using "
+			    "Alphabet::constructEmpty().");
 	}
-	explicit Alphabet(std::string string)
+
+	explicit Alphabet(std::string const& string)
 	    : Alphabet(stringToPtrVec<C>(string)){};
+
+	Alphabet(Alphabet const&) = delete;
+	Alphabet(Alphabet&&) = default;
+
+	static auto constructEmpty()
+	{
+		if (!emptyAlphabet)
+			emptyAlphabet = std::make_shared<Alphabet>(Alphabet<C>{DummyEmpty});
+
+		return emptyAlphabet;
+	}
 
 	size_t size() const { return chars.size(); }
 
@@ -140,6 +161,8 @@ public:
 		for_each([](const C* c) { delete c; });
 	}
 };
+
+template <typename C> std::shared_ptr<Alphabet<C>> Alphabet<C>::emptyAlphabet{};
 
 template <typename C>
 std::ostream& operator<<(std::ostream& out, AlphabetLike<C> const& alphabet)
