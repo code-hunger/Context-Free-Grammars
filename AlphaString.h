@@ -17,6 +17,11 @@ template <typename C> struct AlphaString
 
 	void print(std::ostream& out) const
 	{
+		if (string.size() == 0) {
+			out << "@";
+			return;
+		}
+
 		for (auto c : string) {
 			c->print(out);
 		}
@@ -30,6 +35,9 @@ template <typename C> struct AlphaString
 	static AlphaString<C> parseString(shared_ptr<AlphabetLike<C>> alphabet,
 	                                  std::string const& str)
 	{
+		if (str.size() <= 1 && str[0] == '@')
+			return {Alphabet<LetterChar>::constructEmpty(), {}};
+
 		std::vector<const C*> new_string;
 
 		for (C const& c : str) {
