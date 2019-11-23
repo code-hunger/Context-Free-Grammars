@@ -17,7 +17,8 @@ struct CharUnion
 
 	void print(std::ostream& out) const
 	{
-		auto CharPrinter = [&out](const auto* t) { out << *t; };
+		constexpr auto CharPrinter = [&out](const auto* t) { out << *t; };
+
 		std::visit(CharPrinter, value);
 	};
 };
@@ -33,10 +34,6 @@ struct AlphabetTouple : public AlphabetLike<CharUnion<CN, CT>>
 {
 	using C = std::enable_if_t<std::is_same<CN, CT>::value, CN>;
 
-	static constexpr auto CharPrinter = [](std::ostream& out) {
-		return [&out](const auto* c) { c->print(out); };
-	};
-
 	const std::shared_ptr<Alphabet<CN>> N;
 	const std::shared_ptr<Alphabet<CT>> T;
 
@@ -46,17 +43,19 @@ struct AlphabetTouple : public AlphabetLike<CharUnion<CN, CT>>
 
 	bool subsetOf(AlphabetLike<C> const& other) const override
 	{
-		auto otherHasChar = [&other](auto const* c) {
+		constexpr auto CharFinder = [&other](auto const* c) {
 			return other.findChar(*c);
 		};
 
-		return all_of(*N, otherHasChar) && all_of(*T, otherHasChar);
+		return all_of(*N, CharFinder) && all_of(*T, CharFinder);
 	}
 
 	void print(std::ostream& out) const override
 	{
-		N->for_each(CharPrinter(out));
-		T->for_each(CharPrinter(out));
+		constexpr auto CharPrinter = [&out](const auto* c) { c->print(out); };
+
+		N->for_each(CharPrinter);
+		T->for_each(CharPrinter);
 	}
 
 	AlphabetTouple(decltype(N) N, decltype(T) T) : N(N), T(T) {}
@@ -75,16 +74,19 @@ template <typename C> struct AlphabetTouple<C, C> : public AlphabetLike<C>
 
 	bool subsetOf(AlphabetLike<C> const& other) const override
 	{
-		auto otherHasChar = [&other](const C* c) { return other.findChar(*c); };
+		constexpr auto CharFinder = [&other](C const* c) {
+			return other.findChar(*c);
+		};
 
-		return all_of(*N, otherHasChar) && all_of(*T, otherHasChar);
+		return all_of(*N, CharFinder) && all_of(*T, CharFinder);
 	}
 
 	void print(std::ostream& out) const override
 	{
-		auto printChar = [&out](const C* c) { c->print(out); };
-		N->for_each(printChar);
-		T->for_each(printChar);
+		constexpr auto CharPrinter = [&out](const C* c) { c->print(out); };
+
+		N->for_each(CharPrinter);
+		T->for_each(CharPrinter);
 	}
 
 	AlphabetTouple(decltype(N) N, decltype(T) T) : N(N), T(T)
