@@ -9,25 +9,30 @@
 
 namespace context_free {
 
-template <typename C> struct Rule
+template <typename CN, typename CT = CN> struct Rule
 {
-	const C& from;
+	using C = std::conditional<std::is_same_v<CN, CT>, CN, CharUnion<CN, CT>>;
 
-	const AlphaString<C> to;
+	using FromType = CN;
+	using ToType = typename C::type;
 
-	Rule(C const& from, AlphaString<C>&& to) : from(from), to(std::move(to)) {}
+	const FromType& from;
+	const AlphaString<ToType> to;
+
+	Rule(const FromType& from, AlphaString<ToType>&& to)
+	    : from(from), to(std::move(to))
+	{
+	}
 };
 
-template <typename C> struct GrammarTouple
+template <typename CN, typename CT> struct GrammarTouple
 {
-	using SharedAlphabet = shared_ptr<Alphabet<C>>;
+	const shared_ptr<AlphabetTouple<CN, CT>> alphabets;
 
-	const shared_ptr<AlphabetTouple<C>> alphabets;
+	const CN* start;
+	const std::vector<Rule<CN, CT>> rules;
 
-	const C* start;
-	const std::vector<Rule<C>> rules;
-
-	GrammarTouple(decltype(alphabets) alphabets, C const& start,
+	GrammarTouple(decltype(alphabets) alphabets, CN const& start,
 	              decltype(rules) rules)
 	    : alphabets(alphabets), start(alphabets->N->findChar(start)),
 	      rules(rules)
@@ -46,11 +51,14 @@ template <typename C> struct GrammarTouple
 	auto operator=(GrammarTouple const&) = delete;
 };
 
-template <typename C> struct CFGrammarTouple : GrammarTouple<C>
+template <typename CN, typename CT>
+struct CFGrammarTouple : GrammarTouple<CN, CT>
 {
-	CFGrammarTouple(decltype(GrammarTouple<C>::alphabets) alphabets,
-	                C const& start, decltype(GrammarTouple<C>::rules) rules)
-	    : GrammarTouple<C>(alphabets, start, rules)
+	using parent = GrammarTouple<CN, CT>;
+
+	CFGrammarTouple(decltype(parent::alphabets) alphabets, CN const& start,
+	                decltype(parent::rules) rules)
+	    : parent(alphabets, start, rules)
 	{
 		if (!all_of(rules, [& N = *alphabets->N](auto& rule) {
 			    return N.findChar(rule.from);

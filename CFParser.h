@@ -5,7 +5,6 @@
 
 namespace context_free {
 
-namespace {
 using std::istream;
 
 AlphaString<LetterChar>
@@ -32,11 +31,11 @@ const C& parseLetterChar(istream& input, AlphabetLike<C> const& alphabet)
 	return *in_alphabet;
 }
 
-template <typename C = LetterChar>
-using AlphabetsPtr = std::shared_ptr<AlphabetTouple<C>>;
+template <typename CN, typename CT = CN>
+using AlphabetsPtr = std::shared_ptr<AlphabetTouple<CN, CT>>;
 
-template <typename C>
-Rule<C> parseRule(istream& input, AlphabetsPtr<C> alphabets)
+template <typename CN, typename CT>
+Rule<CN, CT> parseRule(istream& input, AlphabetsPtr<CN, CT> alphabets)
 {
 	return {parseLetterChar(input, *alphabets->N),
 	        parseString(input, alphabets)};
@@ -48,9 +47,10 @@ bool streamFinished(istream& input)
 	return input.eof();
 }
 
-template <typename C> auto parseRules(istream& input, AlphabetsPtr<C> alphabets)
+template <typename CN, typename CT>
+auto parseRules(istream& input, AlphabetsPtr<CN, CT> alphabets)
 {
-	std::vector<Rule<C>> rules;
+	std::vector<Rule<CN, CT>> rules;
 
 	while (input && !streamFinished(input)) {
 		try {
@@ -66,13 +66,12 @@ template <typename C> auto parseRules(istream& input, AlphabetsPtr<C> alphabets)
 	return rules;
 }
 
-template <typename C>
-CFGrammarTouple<C> parseGrammar(istream& input, AlphabetsPtr<C> alphabets)
+template <typename CN, typename CT>
+CFGrammarTouple<CN, CT> parseGrammar(istream& input,
+                                     AlphabetsPtr<CN, CT> alphabets)
 {
 	return {alphabets, parseLetterChar(input, *alphabets->N),
 	        parseRules(input, alphabets)};
 }
-
-} // namespace
 
 } // namespace context_free
