@@ -1,4 +1,5 @@
 #include "AlphaString.h"
+#include "Automata.h"
 #include "CFGrammar.h"
 #include "CFParser.h"
 
@@ -30,6 +31,20 @@ int main()
 		std::cout << "The grammar has a rule from " << rule.from << " to "
 		          << rule.to << std::endl;
 	}
+
+	using State = State<LetterChar, LetterChar>;
+	using Stack = Stack<LetterChar>;
+	using Command = Stack::Command;
+	State p{"p"};
+	State q{"q"};
+	State f{"f"};
+
+	p.transitions[std::make_pair('a', 'E')] =
+	    std::vector<std::pair<Command, State*>>{
+	        std::make_pair<Command, State*>(Stack::Sleep{}, &q),
+	        std::make_pair<Command, State*>(Stack::Sleep{}, &p)};
+
+	Automata<LetterChar> automata{{p, q, f}};
 
 	std::cout << "Bye!" << std::endl;
 
