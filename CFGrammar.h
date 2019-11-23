@@ -2,6 +2,7 @@
 
 #include "AlphaString.h"
 #include "Alphabet.h"
+#include "AlphabetTouple.h"
 #include <algorithm>
 
 #include <memory>
