@@ -5,7 +5,8 @@
 namespace context_free {
 using std::shared_ptr;
 
-template <typename C> struct AlphaString
+template <typename C>
+struct AlphaString : FunctorLike<const C&>, FunctorLike<const C*>
 {
 	const shared_ptr<AlphabetLike<C>> alphabet;
 
@@ -25,6 +26,34 @@ template <typename C> struct AlphaString
 		for (auto c : string) {
 			c->print(out);
 		}
+	}
+
+	void for_each(std::function<void(const C*)> const& p) const override
+	{
+		std::for_each(string.begin(), string.end(), p);
+	}
+
+	bool all_of(std::function<bool(const C*)> const& p) const override
+	{
+		return std::all_of(string.begin(), string.end(), p);
+	}
+
+	void for_each(std::function<void(const C&)> const& p) const override
+	{
+		for (const C* c : string) {
+			p(*c);
+		}
+	}
+
+	bool all_of(std::function<bool(const C&)> const& p) const override
+	{
+		for (const C* c : string) {
+			if (!p(*c)) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	size_t size() const;
