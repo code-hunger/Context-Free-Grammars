@@ -52,6 +52,12 @@ template <typename CN, typename CT> struct GrammarTouple
 	auto operator=(GrammarTouple const&) = delete;
 };
 
+template <typename T, typename P>
+static bool all_of(T const& container, P const& predicate)
+{
+	return std::all_of(container.begin(), container.end(), predicate);
+}
+
 template <typename CN, typename CT>
 struct CFGrammarTouple : GrammarTouple<CN, CT>
 {

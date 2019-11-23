@@ -26,7 +26,7 @@ struct CharUnion
 template <typename C>
 bool pairwiseDistinct(Alphabet<C> const& A, Alphabet<C> const& B)
 {
-	return all_of(A, [&B](const C* c) { return !B.findChar(*c); });
+	return A.all_of([&B](const C* c) { return !B.findChar(*c); });
 }
 
 template <typename CN, typename CT = CN>

@@ -9,12 +9,6 @@ namespace context_free {
 
 using std::unique_ptr;
 
-template <typename T, typename P>
-static bool all_of(T const& container, P const& predicate)
-{
-	return std::all_of(container.begin(), container.end(), predicate);
-}
-
 struct Char
 {
 	virtual void print(std::ostream&) const = 0;
