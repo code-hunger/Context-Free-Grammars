@@ -43,16 +43,12 @@ struct AlphabetTouple : public AlphabetLike<CharUnion<CN, CT>>
 
 	bool subsetOf(AlphabetLike<C> const& other) const override
 	{
-		constexpr auto CharFinder = [&other](auto const* c) {
-			return other.findChar(*c);
-		};
-
-		return all_of(*N, CharFinder) && all_of(*T, CharFinder);
+		return N->subsetOf(other) && T->subsetOf(other);
 	}
 
 	void print(std::ostream& out) const override
 	{
-		constexpr auto CharPrinter = [&out](const auto* c) { c->print(out); };
+		auto CharPrinter = [&out](const auto* c) { c->print(out); };
 
 		N->for_each(CharPrinter);
 		T->for_each(CharPrinter);
@@ -74,16 +70,12 @@ template <typename C> struct AlphabetTouple<C, C> : public AlphabetLike<C>
 
 	bool subsetOf(AlphabetLike<C> const& other) const override
 	{
-		constexpr auto CharFinder = [&other](C const* c) {
-			return other.findChar(*c);
-		};
-
-		return all_of(*N, CharFinder) && all_of(*T, CharFinder);
+		return N->subsetOf(other) && T->subsetOf(other);
 	}
 
 	void print(std::ostream& out) const override
 	{
-		constexpr auto CharPrinter = [&out](const C* c) { c->print(out); };
+		auto CharPrinter = [&out](const C* c) { c->print(out); };
 
 		N->for_each(CharPrinter);
 		T->for_each(CharPrinter);
