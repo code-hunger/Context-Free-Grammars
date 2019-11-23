@@ -194,7 +194,7 @@ bool pairwiseDistinct(Alphabet<C> const& A, Alphabet<C> const& B)
 	return all_of(A, [&B](const C* c) { return !B.findChar(*c); });
 }
 
-template <typename CN, typename CT>
+template <typename CN, typename CT = CN>
 struct AlphabetTouple : public AlphabetLike<CharUnion<CN, CT>>
 {
 	using C = std::enable_if_t<std::is_same<CN, CT>::value, CN>;
