@@ -10,7 +10,7 @@ namespace context_free {
 using std::unique_ptr;
 
 template <typename T, typename P>
-static bool all_of(T const& container, P predicate)
+static bool all_of(T const& container, P const& predicate)
 {
 	return std::all_of(container.begin(), container.end(), predicate);
 }
@@ -48,8 +48,22 @@ inline std::ostream& operator<<(std::ostream& out, LetterChar const& c)
 template <typename C> struct AlphabetLike
 {
 	virtual const C* findChar(C const&) const = 0;
-	virtual bool subsetOf(AlphabetLike const& other) const = 0;
-	virtual void print(std::ostream&) const = 0;
+
+	virtual bool
+	all_of(std::function<bool(const C*)> const& predicate) const = 0;
+	virtual void
+	for_each(std::function<void(const C*)> const& predicate) const = 0;
+
+	bool subsetOf(AlphabetLike<C> const& other) const
+	{
+		return all_of(
+		    [&other](const C* c) -> bool { return nullptr != other.findChar(*c); });
+	}
+
+	void print(std::ostream& out) const
+	{
+		for_each([&out](const C* c) { c->print(out); });
+	}
 
 	AlphabetLike() = default;
 	AlphabetLike(AlphabetLike&&) = default;
@@ -136,23 +150,17 @@ public:
 		throw std::runtime_error("Union operation unimplemented.");
 	}
 
-	bool subsetOf(AlphabetLike<C> const& other) const override
-	{
-		return all_of(*this,
-		              [&other](const C* c) { return other.findChar(*c); });
-	}
-
 	auto begin() const { return std::begin(chars); }
 	auto end() const { return std::end(chars); }
 
-	template <typename P> void for_each(P const& p) const
+	bool all_of(std::function<bool(const C*)> const& predicate) const override
 	{
-		std::for_each(begin(), end(), p);
+		return std::all_of(begin(), end(), predicate);
 	}
 
-	void print(std::ostream& out) const override
+	void for_each(std::function<void(const C*)> const& predicate) const override
 	{
-		for_each([&out](const C* c) { c->print(out); });
+		std::for_each(begin(), end(), predicate);
 	}
 
 	~Alphabet()

@@ -41,17 +41,15 @@ struct AlphabetTouple : public AlphabetLike<CharUnion<CN, CT>>
 
 	const CT* findChar(CT const& c) const override { return T->findChar(c); };
 
-	bool subsetOf(AlphabetLike<C> const& other) const override
+	bool all_of(std::function<bool(const C*)> const& predicate) const override
 	{
-		return N->subsetOf(other) && T->subsetOf(other);
+		return N->all_of(predicate) && T->all_of(predicate);
 	}
 
-	void print(std::ostream& out) const override
+	void for_each(std::function<void(const C*)> const& predicate) const override
 	{
-		auto CharPrinter = [&out](const auto* c) { c->print(out); };
-
-		N->for_each(CharPrinter);
-		T->for_each(CharPrinter);
+		N->for_each(predicate);
+		T->for_each(predicate);
 	}
 
 	AlphabetTouple(decltype(N) N, decltype(T) T) : N(N), T(T) {}
@@ -68,17 +66,15 @@ template <typename C> struct AlphabetTouple<C, C> : public AlphabetLike<C>
 		return T->findChar(c);
 	}
 
-	bool subsetOf(AlphabetLike<C> const& other) const override
+	bool all_of(std::function<bool(const C*)> const& predicate) const override
 	{
-		return N->subsetOf(other) && T->subsetOf(other);
+		return N->all_of(predicate) && T->all_of(predicate);
 	}
 
-	void print(std::ostream& out) const override
+	void for_each(std::function<void(const C*)> const& predicate) const override
 	{
-		auto CharPrinter = [&out](const C* c) { c->print(out); };
-
-		N->for_each(CharPrinter);
-		T->for_each(CharPrinter);
+		N->for_each(predicate);
+		T->for_each(predicate);
 	}
 
 	AlphabetTouple(decltype(N) N, decltype(T) T) : N(N), T(T)
