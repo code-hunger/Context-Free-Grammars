@@ -33,6 +33,11 @@ struct LetterChar : Char
 	}
 };
 
+inline bool operator<(LetterChar const& a, LetterChar const& b)
+{
+	return a.value < b.value;
+}
+
 inline std::ostream& operator<<(std::ostream& out, LetterChar const& c)
 {
 	c.print(out);
@@ -42,7 +47,7 @@ inline std::ostream& operator<<(std::ostream& out, LetterChar const& c)
 template <typename T> struct FunctorLike
 {
 	virtual bool all_of(std::function<bool(T)> const&) const = 0;
-	virtual void for_each(std::function<void(T)>  const&) const = 0;
+	virtual void for_each(std::function<void(T)> const&) const = 0;
 
 	virtual ~FunctorLike() = default;
 };
@@ -53,7 +58,8 @@ template <typename C> struct AlphabetLike : FunctorLike<const C*>
 
 	bool subsetOf(AlphabetLike<C> const& other) const
 	{
-		return this->all_of([&other](const C* c) { return other.findChar(*c); });
+		return this->all_of(
+		    [&other](const C* c) { return other.findChar(*c); });
 	}
 
 	void print(std::ostream& out) const
