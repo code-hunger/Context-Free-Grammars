@@ -1,15 +1,30 @@
-#include <variant>
+#include <ostream>
 #include <stack>
 #include <stdexcept>
+#include <variant>
 
 namespace context_free {
 
 template <typename C> struct Stack
 {
-	struct Pop {};
-	struct Sleep {};
-	struct Push { C what; };
-	struct Replace { C with; };
+	struct Pop
+	{
+		void print(std::ostream& out) const { out << "Pop"; }
+	};
+	struct Sleep
+	{
+		void print(std::ostream& out) const { out << "Sleep"; }
+	};
+	struct Push
+	{
+		C what;
+		void print(std::ostream& out) const { out << "Push<" << what << ">"; }
+	};
+	struct Replace
+	{
+		C with;
+		void print(std::ostream& out) const { out << "Replace<" << with << ">"; }
+	};
 
 	using Command = const std::variant<Push, Pop, Replace, Sleep>;
 
@@ -22,13 +37,14 @@ template <typename C> struct Stack
 private:
 	std::stack<C> stack;
 
-	void execute(Pop)
+	void execute(Pop const&)
 	{
-		if (stack.empty()) throw std::runtime_error("Cannot call Pop() on an empty stack");
+		if (stack.empty())
+			throw std::runtime_error("Cannot call Pop() on an empty stack");
 		stack.pop();
 	}
 
-	void execute(Sleep&) {}
+	void execute(Sleep const&) {}
 
 	void execute(Push const& arg) { stack.push(arg.what); }
 
@@ -41,5 +57,11 @@ private:
 		}
 	}
 };
+
+template <typename C>
+void printCommand(std::ostream& out, typename Stack<C>::Command const& command)
+{
+	std::visit([&out](const auto& x) { x.print(out); }, command);
+}
 
 } // namespace context_free

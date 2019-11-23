@@ -46,6 +46,8 @@ int main()
 
 	Automata<LetterChar> automata{{p, q, f}};
 
+	automata.states[0].printTransitions(std::cout);
+
 	std::cout << "Bye!" << std::endl;
 
 	return 0;
