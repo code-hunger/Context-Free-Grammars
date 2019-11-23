@@ -45,24 +45,26 @@ inline std::ostream& operator<<(std::ostream& out, LetterChar const& c)
 	return out;
 }
 
-template <typename C> struct AlphabetLike
+template <typename T> struct FunctorLike
+{
+	virtual bool all_of(std::function<bool(T)> const&) const = 0;
+	virtual void for_each(std::function<void(T)>  const&) const = 0;
+
+	virtual ~FunctorLike() = default;
+};
+
+template <typename C> struct AlphabetLike : FunctorLike<const C*>
 {
 	virtual const C* findChar(C const&) const = 0;
 
-	virtual bool
-	all_of(std::function<bool(const C*)> const& predicate) const = 0;
-	virtual void
-	for_each(std::function<void(const C*)> const& predicate) const = 0;
-
 	bool subsetOf(AlphabetLike<C> const& other) const
 	{
-		return all_of(
-		    [&other](const C* c) -> bool { return nullptr != other.findChar(*c); });
+		return this->all_of([&other](const C* c) { return other.findChar(*c); });
 	}
 
 	void print(std::ostream& out) const
 	{
-		for_each([&out](const C* c) { c->print(out); });
+		this->for_each([&out](const C* c) { c->print(out); });
 	}
 
 	AlphabetLike() = default;
