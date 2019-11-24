@@ -41,14 +41,20 @@ int main()
 
 	p.transitions[std::make_pair('a', 'E')] =
 	    std::vector<std::pair<Command, State*>>{
-	        std::make_pair<Command, State*>(Stack::Sleep{}, &q),
-	        std::make_pair<Command, State*>(Stack::Sleep{}, &p)};
+	        std::make_pair(Stack::Sleep{}, &q),
+	        std::make_pair(Stack::Sleep{}, &p)};
 
 	Automata<LetterChar> automata{alphabets, {p, q, f}};
 
-	automata.states[0].printTransitions(std::cout);
+	std::cout << "Start: " << automata.start.human_name << std::endl;
 
-	automata.readWord(parseString(std::cin, alphabets->T));
+	for (State& s : automata.states) {
+		std::cout << "State: " << s.human_name << std::endl;
+		s.printTransitions(std::cout);
+	}
+
+	std::cout << automata.readWord(parseString(std::cin, alphabets->T))
+	          << std::endl;
 
 	std::cout << "Bye!" << std::endl;
 
