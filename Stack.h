@@ -1,3 +1,5 @@
+#include <memory>
+#include <optional>
 #include <ostream>
 #include <stack>
 #include <stdexcept>
@@ -36,7 +38,21 @@ template <typename C> struct Stack
 	void fire(Command& command)
 	{
 		// Magic!
-		std::visit([*this](auto const& arg) { execute(arg); }, command);
+		std::visit([this](auto const& arg) mutable { execute(arg); }, command);
+	}
+
+	Command invertCommand(Command& command)
+	{
+		// Magic!
+		return std::visit([this](auto const& arg) { return invert(arg); },
+		                  command);
+	}
+
+	std::optional<C> top() const
+	{
+		if (stack.empty()) return {};
+
+		return stack.top();
 	}
 
 	const std::shared_ptr<AlphabetLike<C>> alphabet;
