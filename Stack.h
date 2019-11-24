@@ -56,6 +56,22 @@ private:
 			stack.top() = arg.with;
 		}
 	}
+
+	Command invert(Sleep const&) const { return Sleep{}; }
+	Command invert(Push const&) const { return Pop{}; }
+	Command invert(Replace const&) const
+	{
+		if (stack.empty()) {
+			return Pop{};
+		}
+		return Replace{stack.top()};
+	}
+	Command invert(Pop const&) const
+	{
+		if (stack.empty())
+			throw std::runtime_error("Cannot call Pop() on an empty stack");
+		return Push{stack.top()};
+	}
 };
 
 template <typename C>
