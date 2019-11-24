@@ -52,7 +52,7 @@ template <typename CN, typename CT,
           typename It = typename AlphaString<CT>::string::const_iterator>
 bool readWord(It readFrom, It readTo, State<CN, CT> const& state, Stack<CN>& stack)
 {
-	if (readFrom == readTo) return true;
+	if (readFrom == readTo) return stack.empty();
 
 	const CT* nextChar = *readFrom;
 

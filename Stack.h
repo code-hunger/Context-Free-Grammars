@@ -55,6 +55,8 @@ template <typename C> struct Stack
 		return stack.top();
 	}
 
+	bool empty() const { return stack.empty(); }
+
 	const std::shared_ptr<AlphabetLike<C>> alphabet;
 
 	Stack(decltype(alphabet) alphabet, std::optional<C> bottom)
