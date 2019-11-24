@@ -48,6 +48,8 @@ int main()
 
 	automata.states[0].printTransitions(std::cout);
 
+	automata.readWord(parseString(std::cin, alphabets->T));
+
 	std::cout << "Bye!" << std::endl;
 
 	return 0;

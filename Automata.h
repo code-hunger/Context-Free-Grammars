@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "AlphaString.h"
 #include "AlphabetTouple.h"
 #include "Stack.h"
 
@@ -15,6 +16,14 @@ template <typename CN, typename CT> struct State
 	std::map<std::pair<std::optional<CN>, CT>,
 	         std::vector<std::pair<typename Stack<CN>::Command, State*>>>
 	    transitions{};
+
+	auto& next(Stack<CN> const& stack, CT charToRead) const
+	{
+		static typename decltype(transitions)::mapped_type emptyTransition = {};
+		auto x = transitions.find(std::make_pair(stack.top(), charToRead));
+
+		return x != transitions.end() ? x->second : emptyTransition;
+	}
 
 	static void printOrMissing(std::ostream& out, std::optional<CN> c)
 	{
@@ -39,22 +48,40 @@ template <typename CN, typename CT> struct State
 	}
 };
 
+template <typename CN, typename CT,
+          typename It = typename AlphaString<CT>::string::iterator>
+bool readWord(It readFrom, It readTo, State<CN, CT>& state, Stack<CN>& stack)
+{
+	if (readFrom == readTo) return true;
+
+	const CT* nextChar = *readFrom;
+
+	auto const& transitions = state.next(stack, *nextChar);
+
+	for (const auto& [cmd, targetState] : transitions) {
+		const auto& invertedCommand = stack.invertCommand(cmd);
+
+		stack.fire(cmd);
+		if (readWord(readFrom + 1, readTo, *targetState, stack)) return true;
+
+		stack.fire(invertedCommand);
+	}
+	return false;
+}
+
 template <typename CN, typename CT = CN> struct Automata
 {
 	std::shared_ptr<AlphabetTouple<CN, CT>> alphabets;
 
 	std::vector<State<CN, CT>> states;
 	State<CN, CT>& start = states.front();
-};
 
-template <typename CN, typename CT> struct Instant
-{
-	Automata<CN, CT>& A;
-	Stack<CN> stack;
-
-	State<CN, CT>& state;
-
-	std::string wordToRead;
+	bool readWord(AlphaString<CT> const& string)
+	{
+		Stack<CN> stack{alphabets->N};
+		return context_free::readWord(string.string.begin(),
+		                              string.string.end(), start, stack);
+	}
 };
 
 } // namespace context_free
