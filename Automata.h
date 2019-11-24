@@ -11,16 +11,26 @@ template <typename CN, typename CT> struct State
 {
 	const std::string human_name = std::to_string(static_cast<int>(this));
 
-	std::map<std::pair<CN, CT>,
+	std::map<std::pair<std::optional<CN>, CT>,
 	         std::vector<std::pair<typename Stack<CN>::Command, State*>>>
 	    transitions{};
+
+	static void printOrMissing(std::ostream& out, std::optional<CN> c)
+	{
+		if (c.has_value())
+			out << *c;
+		else
+			out << "-";
+	}
 
 	void printTransitions(std::ostream& out)
 	{
 		for (auto const& [from, to] : transitions) {
 			for (auto to : to) {
 				const typename Stack<CN>::Command& cmd = to.first;
-				out << " | " << from.first << ", " << from.second << " --> ";
+				out << " | ";
+				printOrMissing(out, from.first);
+				out << ", " << from.second << " --> ";
 				printCommand<CN>(out, cmd);
 				out << " -> " << to.second->human_name << std::endl;
 			}
