@@ -59,6 +59,15 @@ template <typename C> struct Stack
 
 	Stack(decltype(alphabet) alphabet) : alphabet(alphabet) {}
 
+	void push(C c)
+	{
+		if (!alphabet->findChar(c))
+			throw std::runtime_error("Tried to add an element to the stack "
+			                         "which is not in the specified alphabet!");
+
+		stack.push(c);
+	}
+
 private:
 	std::stack<C> stack{};
 
@@ -71,25 +80,17 @@ private:
 
 	void execute(Sleep const&) {}
 
-	void execute(Push const& arg)
-	{
-		if (!alphabet->findChar(arg.what))
-			throw std::runtime_error("Tried to add an element to the stack "
-			                         "which is not in the specified alphabet!");
-		stack.push(arg.what);
-	}
+	void execute(Push const& arg) { push(arg.what); }
 
 	void execute(Replace const& arg)
 	{
 		if (!alphabet->findChar(arg.with))
 			throw std::runtime_error("Tried to add an element to the stack "
 			                         "which is not in the specified alphabet!");
-		if (stack.empty()) {
-			stack.push(arg.with);
-		} else {
+		if (!stack.empty()) {
 			stack.pop();
-			stack.push(arg.with);
 		}
+		stack.push(arg.with);
 	}
 
 	Command invert(Sleep const&) const { return Sleep{}; }
