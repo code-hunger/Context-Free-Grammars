@@ -48,7 +48,7 @@ int main()
 
 	std::cout << "Start: " << automata.start.human_name << std::endl;
 
-	for (State& s : automata.states) {
+	for (const State& s : automata.states) {
 		std::cout << "State: " << s.human_name << std::endl;
 		s.printTransitions(std::cout);
 	}

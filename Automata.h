@@ -33,7 +33,7 @@ template <typename CN, typename CT> struct State
 			out << "-";
 	}
 
-	void printTransitions(std::ostream& out)
+	void printTransitions(std::ostream& out) const
 	{
 		for (auto const& [from, to] : transitions) {
 			for (auto to : to) {
@@ -49,8 +49,8 @@ template <typename CN, typename CT> struct State
 };
 
 template <typename CN, typename CT,
-          typename It = typename AlphaString<CT>::string::iterator>
-bool readWord(It readFrom, It readTo, State<CN, CT>& state, Stack<CN>& stack)
+          typename It = typename AlphaString<CT>::string::const_iterator>
+bool readWord(It readFrom, It readTo, State<CN, CT> const& state, Stack<CN>& stack)
 {
 	if (readFrom == readTo) return true;
 
@@ -71,10 +71,11 @@ bool readWord(It readFrom, It readTo, State<CN, CT>& state, Stack<CN>& stack)
 
 template <typename CN, typename CT = CN> struct Automata
 {
-	std::shared_ptr<AlphabetTouple<CN, CT>> alphabets;
+	const std::shared_ptr<AlphabetTouple<CN, CT>> alphabets;
 
-	std::vector<State<CN, CT>> states;
-	State<CN, CT>& start = states.front();
+	const std::vector<State<CN, CT>> states;
+
+	const State<CN, CT>& start = states.front();
 
 	bool readWord(AlphaString<CT> const& string)
 	{
