@@ -53,7 +53,8 @@ private:
 		if (stack.empty()) {
 			stack.push(arg.with);
 		} else {
-			stack.top() = arg.with;
+			stack.pop();
+			stack.push(arg.with);
 		}
 	}
 
