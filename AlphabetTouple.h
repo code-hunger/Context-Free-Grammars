@@ -1,3 +1,5 @@
+#pragma once
+
 #include <memory>
 #include <sstream>
 #include <variant>
@@ -6,12 +8,7 @@
 
 namespace context_free {
 
-template <typename C1, typename C2>
-using types_not_same = std::negation<std::is_same<C1, C2>>;
-
-template <typename C1, typename C2,
-          typename = typename std::enable_if<types_not_same<C1, C2>::value>>
-struct CharUnion
+template <typename C1, typename C2> struct CharUnion
 {
 	const std::variant<const C1*, const C2*> value;
 
@@ -22,6 +19,14 @@ struct CharUnion
 		std::visit(CharPrinter, value);
 	};
 };
+
+/*
+ * A CharUnion makes no sense when C1 == C2.
+ * Its only intended usage is as an argument ot AlphabetTouple<C1, C2> when C1
+ * and C2 are different, otherwise AlphabetTouple uses a single C directly,
+ * instead of `CharUnion<C, C>`.
+ */
+template <typename C> struct CharUnion<C, C>;
 
 template <typename C>
 bool pairwiseDistinct(Alphabet<C> const& A, Alphabet<C> const& B)
