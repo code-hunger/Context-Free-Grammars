@@ -52,7 +52,7 @@ template <typename C> struct Stack
 	{
 		if (stack.empty()) return {};
 
-		return stack.top();
+		return *stack.top();
 	}
 
 	bool empty() const { return stack.empty(); }
@@ -65,17 +65,18 @@ template <typename C> struct Stack
 		if (bottom) push(*bottom);
 	}
 
-	void push(C c)
+	void push(C const& c)
 	{
-		if (!alphabet->findChar(c))
+		const C* inAlphabet = alphabet->findChar(c);
+		if (!inAlphabet)
 			throw std::runtime_error("Tried to add an element to the stack "
 			                         "which is not in the specified alphabet!");
 
-		stack.push(c);
+		stack.push(inAlphabet);
 	}
 
 private:
-	std::stack<C> stack{};
+	std::stack<const C*> stack{};
 
 	void execute(Pop const&)
 	{
@@ -90,29 +91,33 @@ private:
 
 	void execute(Replace const& arg)
 	{
-		if (!alphabet->findChar(arg.with))
-			throw std::runtime_error("Tried to add an element to the stack "
-			                         "which is not in the specified alphabet!");
-		if (!stack.empty()) {
-			stack.pop();
-		}
-		stack.push(arg.with);
+		if (stack.empty())
+			throw std::runtime_error(
+			    "Tried to replace the top of an empty stack!");
+
+		const C* inAlphabet = alphabet->findChar(arg.with);
+
+		if (!inAlphabet)
+			throw std::runtime_error(
+					"Got an error while executing Replace() command on the stack. "
+					"Restored to previous state");
+
+		stack.top() = inAlphabet;
 	}
 
 	Command invert(Sleep const&) const { return Sleep{}; }
 	Command invert(Push const&) const { return Pop{}; }
 	Command invert(Replace const&) const
 	{
-		if (stack.empty()) {
-			return Pop{};
-		}
-		return Replace{stack.top()};
+		if (stack.empty()) return Sleep{};
+
+		return Replace{*stack.top()};
 	}
 	Command invert(Pop const&) const
 	{
 		if (stack.empty())
 			throw std::runtime_error("Cannot call Pop() on an empty stack");
-		return Push{stack.top()};
+		return Push{*stack.top()};
 	}
 };
 
