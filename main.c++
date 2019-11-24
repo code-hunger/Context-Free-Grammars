@@ -44,7 +44,7 @@ int main()
 	        std::make_pair<Command, State*>(Stack::Sleep{}, &q),
 	        std::make_pair<Command, State*>(Stack::Sleep{}, &p)};
 
-	Automata<LetterChar> automata{{p, q, f}};
+	Automata<LetterChar> automata{alphabets, {p, q, f}};
 
 	automata.states[0].printTransitions(std::cout);
 

@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "AlphabetTouple.h"
 #include "Stack.h"
 
 namespace context_free {
@@ -40,6 +41,8 @@ template <typename CN, typename CT> struct State
 
 template <typename CN, typename CT = CN> struct Automata
 {
+	std::shared_ptr<AlphabetTouple<CN, CT>> alphabets;
+
 	std::vector<State<CN, CT>> states;
 	State<CN, CT>& start = states.front();
 };

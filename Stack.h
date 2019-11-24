@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <variant>
 
+#include "Alphabet.h"
+
 namespace context_free {
 
 template <typename C> struct Stack
@@ -23,7 +25,10 @@ template <typename C> struct Stack
 	struct Replace
 	{
 		C with;
-		void print(std::ostream& out) const { out << "Replace<" << with << ">"; }
+		void print(std::ostream& out) const
+		{
+			out << "Replace<" << with << ">";
+		}
 	};
 
 	using Command = const std::variant<Push, Pop, Replace, Sleep>;
@@ -34,8 +39,12 @@ template <typename C> struct Stack
 		std::visit([*this](auto const& arg) { execute(arg); }, command);
 	}
 
+	const std::shared_ptr<AlphabetLike<C>> alphabet;
+
+	Stack(decltype(alphabet) alphabet) : alphabet(alphabet) {}
+
 private:
-	std::stack<C> stack;
+	std::stack<C> stack{};
 
 	void execute(Pop const&)
 	{
@@ -46,10 +55,19 @@ private:
 
 	void execute(Sleep const&) {}
 
-	void execute(Push const& arg) { stack.push(arg.what); }
+	void execute(Push const& arg)
+	{
+		if (!alphabet->findChar(arg.what))
+			throw std::runtime_error("Tried to add an element to the stack "
+			                         "which is not in the specified alphabet!");
+		stack.push(arg.what);
+	}
 
 	void execute(Replace const& arg)
 	{
+		if (!alphabet->findChar(arg.with))
+			throw std::runtime_error("Tried to add an element to the stack "
+			                         "which is not in the specified alphabet!");
 		if (stack.empty()) {
 			stack.push(arg.with);
 		} else {
