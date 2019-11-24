@@ -57,7 +57,11 @@ template <typename C> struct Stack
 
 	const std::shared_ptr<AlphabetLike<C>> alphabet;
 
-	Stack(decltype(alphabet) alphabet) : alphabet(alphabet) {}
+	Stack(decltype(alphabet) alphabet, std::optional<C> bottom)
+	    : alphabet(alphabet)
+	{
+		if (bottom) push(*bottom);
+	}
 
 	void push(C c)
 	{

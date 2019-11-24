@@ -76,10 +76,11 @@ template <typename CN, typename CT = CN> struct Automata
 	const std::vector<State<CN, CT>> states;
 
 	const State<CN, CT>& start = states.front();
+	const std::optional<CN> stackBottom{};
 
 	bool readWord(AlphaString<CT> const& string)
 	{
-		Stack<CN> stack{alphabets->N};
+		Stack<CN> stack{alphabets->N, stackBottom};
 		return context_free::readWord(string.string.begin(),
 		                              string.string.end(), start, stack);
 	}
