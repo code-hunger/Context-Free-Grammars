@@ -33,16 +33,15 @@ int main()
 	}
 
 	using State = State<LetterChar, LetterChar>;
-	using Stack = Stack<LetterChar>;
-	using Command = Stack::Command;
+	using Command = StackCommand<LetterChar>;
 	State p{"p"};
 	State q{"q"};
 	State f{"f"};
 
 	p.transitions[std::make_pair('a', 'E')] =
 	    std::vector<std::pair<Command, State*>>{
-	        std::make_pair(Stack::Sleep{}, &q),
-	        std::make_pair(Stack::Sleep{}, &p)};
+	        std::make_pair(Command{Command::Sleep{}}, &q),
+	        std::make_pair(Command{Command::Sleep{}}, &p)};
 
 	Automata<LetterChar> automata{alphabets, {p, q, f}};
 

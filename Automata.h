@@ -14,7 +14,7 @@ template <typename CN, typename CT> struct State
 	const std::string human_name = std::to_string(static_cast<int>(this));
 
 	std::map<std::pair<std::optional<CN>, CT>,
-	         std::vector<std::pair<typename Stack<CN>::Command, State*>>>
+	         std::vector<std::pair<StackCommand<CN>, State*>>>
 	    transitions{};
 
 	auto& next(Stack<CN> const& stack, CT charToRead) const
@@ -37,7 +37,7 @@ template <typename CN, typename CT> struct State
 	{
 		for (auto const& [from, to] : transitions) {
 			for (auto to : to) {
-				const typename Stack<CN>::Command& cmd = to.first;
+				const StackCommand<CN>& cmd = to.first;
 				out << " | ";
 				printOrMissing(out, from.first);
 				out << ", " << from.second << " --> ";
@@ -50,7 +50,8 @@ template <typename CN, typename CT> struct State
 
 template <typename CN, typename CT,
           typename It = typename AlphaString<CT>::string::const_iterator>
-bool readWord(It readFrom, It readTo, State<CN, CT> const& state, Stack<CN>& stack)
+bool readWord(It readFrom, It readTo, State<CN, CT> const& state,
+              Stack<CN>& stack)
 {
 	if (readFrom == readTo) return stack.empty();
 
@@ -59,12 +60,12 @@ bool readWord(It readFrom, It readTo, State<CN, CT> const& state, Stack<CN>& sta
 	auto const& transitions = state.next(stack, *nextChar);
 
 	for (const auto& [cmd, targetState] : transitions) {
-		const auto& invertedCommand = stack.invertCommand(cmd);
+		const auto& invertedCommand = cmd.invert(stack);
 
-		stack.fire(cmd);
+		cmd.fire(stack);
 		if (readWord(readFrom + 1, readTo, *targetState, stack)) return true;
 
-		stack.fire(invertedCommand);
+		invertedCommand.fire(stack);
 	}
 	return false;
 }

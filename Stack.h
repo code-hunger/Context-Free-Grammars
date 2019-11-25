@@ -11,42 +11,7 @@ namespace context_free {
 
 template <typename C> struct Stack
 {
-	struct Pop
-	{
-		void print(std::ostream& out) const { out << "Pop"; }
-	};
-	struct Sleep
-	{
-		void print(std::ostream& out) const { out << "Sleep"; }
-	};
-	struct Push
-	{
-		C what;
-		void print(std::ostream& out) const { out << "Push<" << what << ">"; }
-	};
-	struct Replace
-	{
-		C with;
-		void print(std::ostream& out) const
-		{
-			out << "Replace<" << with << ">";
-		}
-	};
-
-	using Command = const std::variant<Push, Pop, Replace, Sleep>;
-
-	void fire(Command& command)
-	{
-		// Magic!
-		std::visit([this](auto const& arg) mutable { execute(arg); }, command);
-	}
-
-	Command invertCommand(Command& command)
-	{
-		// Magic!
-		return std::visit([this](auto const& arg) { return invert(arg); },
-		                  command);
-	}
+	// template <typename _> friend struct StackCommand;
 
 	std::optional<C> top() const
 	{
@@ -75,56 +40,113 @@ template <typename C> struct Stack
 		stack.push(inAlphabet);
 	}
 
-private:
-	std::stack<const C*> stack{};
-
-	void execute(Pop const&)
+	void pop()
 	{
 		if (stack.empty())
 			throw std::runtime_error("Cannot call Pop() on an empty stack");
 		stack.pop();
 	}
 
-	void execute(Sleep const&) {}
+private:
+	std::stack<const C*> stack{};
+};
 
-	void execute(Push const& arg) { push(arg.what); }
+template <typename C> struct StackCommand
+{
+	struct Pop
+	{
+		void print(std::ostream& out) const { out << "Pop"; }
+	};
+	struct Sleep
+	{
+		void print(std::ostream& out) const { out << "Sleep"; }
+	};
+	struct Push
+	{
+		C what;
+		void print(std::ostream& out) const { out << "Push<" << what << ">"; }
+	};
+	struct Replace
+	{
+		C with;
+		void print(std::ostream& out) const
+		{
+			out << "Replace<" << with << ">";
+		}
+	};
 
-	void execute(Replace const& arg)
+	const std::variant<Push, Pop, Replace, Sleep> value;
+
+	void fire(Stack<C>& stack) const
+	{
+		// Magic!
+		std::visit(
+		    [this, &stack](auto const& arg) mutable { execute(arg, stack); },
+		    value);
+	}
+
+	void execute(Pop const&, Stack<C>& stack) const
+	{
+		if (stack.empty())
+			throw std::runtime_error("Cannot call Pop() on an empty stack");
+		stack.pop();
+	}
+
+	void execute(Sleep const&, Stack<C> const&) const {}
+
+	void execute(Push const& arg, Stack<C>& stack) const
+	{
+		stack.push(arg.what);
+	}
+
+	void execute(Replace const& arg, Stack<C>& stack) const
 	{
 		if (stack.empty())
 			throw std::runtime_error(
 			    "Tried to replace the top of an empty stack!");
 
-		const C* inAlphabet = alphabet->findChar(arg.with);
+		const C* inAlphabet = stack.alphabet->findChar(arg.with);
 
 		if (!inAlphabet)
 			throw std::runtime_error(
-					"Got an error while executing Replace() command on the stack. "
-					"Restored to previous state");
+			    "Got an error while executing Replace() command on the stack. "
+			    "Restored to previous state");
 
-		stack.top() = inAlphabet;
+		stack.pop();
+		stack.push(*inAlphabet);
 	}
 
-	Command invert(Sleep const&) const { return Sleep{}; }
-	Command invert(Push const&) const { return Pop{}; }
-	Command invert(Replace const&) const
+	auto invert(Stack<C>& stack) const
 	{
-		if (stack.empty()) return Sleep{};
-
-		return Replace{*stack.top()};
+		// Magic!
+		return std::visit(
+		    [this, &stack](auto const& arg) { return invert(arg, stack); },
+		    value);
 	}
-	Command invert(Pop const&) const
+
+	StackCommand invert(Sleep const&, Stack<C> const&) const
+	{
+		return {Sleep{}};
+	}
+	StackCommand invert(Push const&, Stack<C> const&) const { return {Pop{}}; }
+	StackCommand invert(Replace const&, Stack<C> const& stack) const
+	{
+		if (stack.empty()) return {Sleep{}};
+
+		return {Replace{*stack.top()}};
+	}
+	StackCommand invert(Pop const&, const Stack<C>& stack) const
 	{
 		if (stack.empty())
 			throw std::runtime_error("Cannot call Pop() on an empty stack");
-		return Push{*stack.top()};
+		return {Push{*stack.top()}};
 	}
 };
 
 template <typename C>
-void printCommand(std::ostream& out, typename Stack<C>::Command const& command)
+void printCommand(std::ostream& out, StackCommand<C> const& command)
 {
-	std::visit([&out](const auto& x) { x.print(out); }, command);
+	std::visit([&out](const auto& x) { x.print(out); }, command.value);
 }
 
 } // namespace context_free
