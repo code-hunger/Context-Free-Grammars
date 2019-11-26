@@ -6,6 +6,7 @@
 #include "AlphaString.h"
 #include "AlphabetTouple.h"
 #include "Stack.h"
+#include "StackCommands.h"
 
 namespace context_free {
 
@@ -25,12 +26,9 @@ template <typename CN, typename CT> struct State
 		return x != transitions.end() ? x->second : emptyTransition;
 	}
 
-	static void printOrMissing(std::ostream& out, std::optional<CN> c)
+	static void printOrMissing(std::ostream& out, std::optional<CN> const& c)
 	{
-		if (c.has_value())
-			out << *c;
-		else
-			out << "-";
+		out << c.has_value() ? *c : CN{'-'};
 	}
 
 	void printTransitions(std::ostream& out) const
@@ -59,7 +57,7 @@ bool readWord(It readFrom, It readTo, State<CN, CT> const& state,
 
 	auto const& transitions = state.next(stack, *nextChar);
 
-	for (const auto& [cmd, targetState] : transitions) {
+	for (auto const& [cmd, targetState] : transitions) {
 		cmd->execute(stack);
 		if (readWord(readFrom + 1, readTo, *targetState, stack)) return true;
 
