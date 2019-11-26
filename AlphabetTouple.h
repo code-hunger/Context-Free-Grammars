@@ -40,17 +40,6 @@ struct AlphabetTouple : public AlphabetLike<CharUnion<CN, CT>>
 
 	const CT* findChar(CT const& c) const override { return T->findChar(c); };
 
-	bool all_of(std::function<bool(const C*)> const& predicate) const override
-	{
-		return N->all_of(predicate) && T->all_of(predicate);
-	}
-
-	void for_each(std::function<void(const C*)> const& predicate) const override
-	{
-		N->for_each(predicate);
-		T->for_each(predicate);
-	}
-
 	AlphabetTouple(decltype(N) N, decltype(T) T) : N(N), T(T) {}
 };
 
