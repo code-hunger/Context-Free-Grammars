@@ -28,12 +28,6 @@ template <typename C1, typename C2> struct CharUnion
  */
 template <typename C> struct CharUnion<C, C>;
 
-template <typename C>
-bool pairwiseDistinct(Alphabet<C> const& A, Alphabet<C> const& B)
-{
-	return A.all_of([&B](const C* c) { return !B.findChar(*c); });
-}
-
 template <typename CN, typename CT = CN>
 struct AlphabetTouple : public AlphabetLike<CharUnion<CN, CT>>
 {
@@ -82,7 +76,39 @@ template <typename C> struct AlphabetTouple<C, C> : public AlphabetLike<C>
 		T->for_each(predicate);
 	}
 
-	AlphabetTouple(decltype(N) N, decltype(T) T) : N(N), T(T)
+	AlphabetTouple(decltype(N) N, decltype(T) T) : N(N), T(T) {}
+};
+
+template <typename CN, typename CT = CN>
+struct AlphabetToupleDistinct : public AlphabetTouple<CN, CT>
+{
+	/*
+	 * A touple of 2 alphabets of different Char types is trivially distinct,
+	 * no need for any checks.
+	 */
+	using parent = AlphabetTouple<CN, CT>;
+	AlphabetToupleDistinct(decltype(parent::N) N, decltype(parent::T) T)
+	    : parent(N, T)
+	{
+	}
+};
+
+template <typename C>
+bool pairwiseDistinct(Alphabet<C> const& A, Alphabet<C> const& B)
+{
+	return A.all_of([&B](const C* c) { return !B.findChar(*c); });
+}
+
+template <typename C>
+struct AlphabetToupleDistinct<C, C> : public AlphabetTouple<C, C>
+{
+	/*
+	 * A touple of 2 alphabets of the same Char type must be manually checked
+	 * for uniqueness of the elemnets of the 2 alphabets.
+	 */
+	using parent = AlphabetTouple<C, C>;
+	AlphabetToupleDistinct(decltype(parent::N) N, decltype(parent::T) T)
+	    : parent(N, T)
 	{
 		if (!pairwiseDistinct(*N, *T))
 			throw std::invalid_argument(

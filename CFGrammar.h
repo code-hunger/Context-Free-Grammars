@@ -28,7 +28,7 @@ template <typename CN, typename CT = CN> struct Rule
 
 template <typename CN, typename CT> struct GrammarTouple
 {
-	const shared_ptr<AlphabetTouple<CN, CT>> alphabets;
+	const shared_ptr<AlphabetToupleDistinct<CN, CT>> alphabets;
 
 	const CN* start;
 	const std::vector<Rule<CN, CT>> rules;

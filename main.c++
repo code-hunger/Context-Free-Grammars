@@ -18,7 +18,7 @@ int main()
 	            variables = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 	CFGrammarTouple grammar =
-	    parseGrammar(std::cin, std::make_shared<AlphabetTouple<LetterChar>>(
+	    parseGrammar(std::cin, std::make_shared<AlphabetToupleDistinct<LetterChar>>(
 	                               toSharedAlphabet(variables),
 	                               toSharedAlphabet(terminals)));
 

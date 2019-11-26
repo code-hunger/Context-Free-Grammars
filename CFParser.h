@@ -1,3 +1,5 @@
+#pragma once
+
 #include "CFGrammar.h"
 #include <iostream>
 #include <memory>
@@ -32,7 +34,7 @@ const C& parseLetterChar(istream& input, AlphabetLike<C> const& alphabet)
 }
 
 template <typename CN, typename CT = CN>
-using AlphabetsPtr = std::shared_ptr<AlphabetTouple<CN, CT>>;
+using AlphabetsPtr = std::shared_ptr<AlphabetToupleDistinct<CN, CT>>;
 
 template <typename CN, typename CT>
 Rule<CN, CT> parseRule(istream& input, AlphabetsPtr<CN, CT> alphabets)
