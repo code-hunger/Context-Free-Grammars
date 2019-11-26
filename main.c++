@@ -38,10 +38,11 @@ int main()
 	State q{"q"};
 	State f{"f"};
 
+	Sleep<LetterChar> sleep;
+
 	p.transitions[std::make_pair('a', 'E')] =
-	    std::vector<std::pair<Command, State*>>{
-	        std::make_pair(Command{Command::Sleep{}}, &q),
-	        std::make_pair(Command{Command::Sleep{}}, &p)};
+	    std::vector<std::pair<Command*, State*>>{std::make_pair(&sleep, &q),
+	                                             std::make_pair(&sleep, &p)};
 
 	Automata<LetterChar> automata{alphabets, {p, q, f}};
 

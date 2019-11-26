@@ -14,7 +14,7 @@ template <typename CN, typename CT> struct State
 	const std::string human_name = std::to_string(static_cast<int>(this));
 
 	std::map<std::pair<std::optional<CN>, CT>,
-	         std::vector<std::pair<StackCommand<CN>, State*>>>
+	         std::vector<std::pair<StackCommand<CN>*, State*>>>
 	    transitions{};
 
 	auto& next(Stack<CN> const& stack, CT charToRead) const
@@ -36,12 +36,12 @@ template <typename CN, typename CT> struct State
 	void printTransitions(std::ostream& out) const
 	{
 		for (auto const& [from, to] : transitions) {
-			for (auto to : to) {
-				const StackCommand<CN>& cmd = to.first;
+			for (auto const& to : to) {
+				const StackCommand<CN>& cmd = *to.first;
 				out << " | ";
 				printOrMissing(out, from.first);
 				out << ", " << from.second << " --> ";
-				printCommand<CN>(out, cmd);
+				cmd.print(out);
 				out << " -> " << to.second->human_name << std::endl;
 			}
 		}
@@ -60,12 +60,10 @@ bool readWord(It readFrom, It readTo, State<CN, CT> const& state,
 	auto const& transitions = state.next(stack, *nextChar);
 
 	for (const auto& [cmd, targetState] : transitions) {
-		const auto& invertedCommand = cmd.invert(stack);
-
-		cmd.fire(stack);
+		cmd->execute(stack);
 		if (readWord(readFrom + 1, readTo, *targetState, stack)) return true;
 
-		invertedCommand.fire(stack);
+		cmd->undo(stack);
 	}
 	return false;
 }
