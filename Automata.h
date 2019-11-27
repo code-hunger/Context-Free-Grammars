@@ -10,15 +10,15 @@
 
 namespace context_free {
 
-template <typename CN, typename CT> struct State
+template <typename CTerminal, typename CStack> struct State
 {
 	const std::string human_name = std::to_string(static_cast<int>(this));
 
-	std::map<std::pair<std::optional<CN>, CT>,
-	         std::vector<std::pair<StackCommand<CN>*, State*>>>
+	std::map<std::pair<std::optional<CStack>, CTerminal>,
+	         std::vector<std::pair<StackCommand<CStack>*, State*>>>
 	    transitions{};
 
-	auto& next(Stack<CN> const& stack, CT charToRead) const
+	auto& next(Stack<CStack> const& stack, CTerminal charToRead) const
 	{
 		static typename decltype(transitions)::mapped_type emptyTransition = {};
 		auto x = transitions.find(std::make_pair(stack.top(), charToRead));
@@ -26,16 +26,16 @@ template <typename CN, typename CT> struct State
 		return x != transitions.end() ? x->second : emptyTransition;
 	}
 
-	static void printOrMissing(std::ostream& out, std::optional<CN> const& c)
+	static void printOrMissing(std::ostream& out, std::optional<CStack> const& c)
 	{
-		out << c.has_value() ? *c : CN{'-'};
+		out << c.has_value() ? *c : CStack{'-'};
 	}
 
 	void printTransitions(std::ostream& out) const
 	{
 		for (auto const& [from, to] : transitions) {
 			for (auto const& to : to) {
-				const StackCommand<CN>& cmd = *to.first;
+				const StackCommand<CStack>& cmd = *to.first;
 				out << " | ";
 				printOrMissing(out, from.first);
 				out << ", " << from.second << " --> ";
@@ -66,18 +66,18 @@ bool readWord(It readFrom, It readTo, State<CN, CT> const& state,
 	return false;
 }
 
-template <typename CN, typename CT = CN> struct Automata
+template <typename CTerminal, typename CStack = CTerminal> struct Automata
 {
-	const std::shared_ptr<AlphabetTouple<CN, CT>> alphabets;
+	const std::shared_ptr<AlphabetTouple<CTerminal, CStack>> alphabets;
 
-	const std::vector<State<CN, CT>> states;
+	const std::vector<State<CTerminal,CStack>> states;
 
-	const State<CN, CT>& start = states.front();
-	const std::optional<CN> stackBottom{};
+	const State<CTerminal, CStack>& start = states.front();
+	const std::optional<CStack> stackBottom{};
 
-	bool readWord(AlphaString<CT> const& string)
+	bool readWord(AlphaString<CTerminal> const& string)
 	{
-		Stack<CN> stack{alphabets->N, stackBottom};
+		Stack<CStack> stack{alphabets->N, stackBottom};
 		return context_free::readWord(string.string.begin(),
 		                              string.string.end(), start, stack);
 	}
