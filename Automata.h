@@ -14,8 +14,9 @@ template <typename CTerminal, typename CStack> struct State
 {
 	const std::string human_name = std::to_string(static_cast<int>(this));
 
-	std::map<std::pair<std::optional<CStack>, CTerminal>,
-	         std::vector<std::pair<StackCommand<CStack>*, State*>>>
+	std::map<
+	    std::pair<std::optional<CStack>, CTerminal>,
+	    std::vector<std::pair<std::shared_ptr<StackCommand<CStack>>, State*>>>
 	    transitions{};
 
 	auto& next(Stack<CStack> const& stack, CTerminal charToRead) const
@@ -64,6 +65,7 @@ bool readWord(It readFrom, It readTo, State<CTerminal, CStack> const& state,
 
 		cmd->undo(stack);
 	}
+
 	return false;
 }
 

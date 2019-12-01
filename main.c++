@@ -34,21 +34,20 @@ int main()
 
 	using State = State<LetterChar, LetterChar>;
 	using Command = StackCommand<LetterChar>;
-	State p{"p"};
-	State q{"q"};
-	State f{"f"};
 
-	Sleep<LetterChar> sleep;
+	State p{"p"}, q{"q"}, f{"f"};
+
+	auto sleep = std::make_shared<Sleep<LetterChar>>();
 
 	p.transitions[std::make_pair('a', 'E')] =
-	    std::vector<std::pair<Command*, State*>>{std::make_pair(&sleep, &q),
-	                                             std::make_pair(&sleep, &p)};
+	    std::vector<std::pair<std::shared_ptr<Command>, State*>>{
+	        std::make_pair(sleep, &q), std::make_pair(sleep, &p)};
 
 	Automata<LetterChar> automata{alphabets, {p, q, f}};
 
 	std::cout << "Start: " << automata.start.human_name << std::endl;
 
-	for (const State& s : automata.states) {
+	for (State const& s : automata.states) {
 		std::cout << "State: " << s.human_name << std::endl;
 		s.printTransitions(std::cout);
 	}
