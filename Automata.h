@@ -26,7 +26,8 @@ template <typename CTerminal, typename CStack> struct State
 		return x != transitions.end() ? x->second : emptyTransition;
 	}
 
-	static void printOrMissing(std::ostream& out, std::optional<CStack> const& c)
+	static void printOrMissing(std::ostream& out,
+	                           std::optional<CStack> const& c)
 	{
 		out << c.has_value() ? *c : CStack{'-'};
 	}
@@ -46,14 +47,14 @@ template <typename CTerminal, typename CStack> struct State
 	}
 };
 
-template <typename CN, typename CT,
-          typename It = typename AlphaString<CT>::string::const_iterator>
-bool readWord(It readFrom, It readTo, State<CN, CT> const& state,
-              Stack<CN>& stack)
+template <typename CTerminal, typename CStack,
+          typename It = typename AlphaString<CTerminal>::string::const_iterator>
+bool readWord(It readFrom, It readTo, State<CTerminal, CStack> const& state,
+              Stack<CStack>& stack)
 {
 	if (readFrom == readTo) return stack.empty();
 
-	const CT* nextChar = *readFrom;
+	const CTerminal* nextChar = *readFrom;
 
 	auto const& transitions = state.next(stack, *nextChar);
 
@@ -70,7 +71,7 @@ template <typename CTerminal, typename CStack = CTerminal> struct Automata
 {
 	const std::shared_ptr<AlphabetTouple<CTerminal, CStack>> alphabets;
 
-	const std::vector<State<CTerminal,CStack>> states;
+	const std::vector<State<CTerminal, CStack>> states;
 
 	const State<CTerminal, CStack>& start = states.front();
 	const std::optional<CStack> stackBottom{};
