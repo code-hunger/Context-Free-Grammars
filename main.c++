@@ -56,7 +56,7 @@ int main()
 		          << rule.to << std::endl;
 	}
 
-	Automata<LetterChar> automata{alphabets, createMyStates()};
+	Automata<LetterChar> automata{alphabets->N, alphabets->T, createMyStates()};
 
 	std::cout << "Start: " << automata.start.human_name << std::endl;
 

@@ -35,7 +35,7 @@ template <typename CTerminal, typename CStack> struct State
 	static void printOrMissing(std::ostream& out,
 	                           std::optional<CStack> const& c)
 	{
-		out << c.has_value() ? *c : CStack{'-'};
+		out << (c.has_value() ? *c : CStack{'-'});
 	}
 
 	void printTransitions(std::ostream& out) const
@@ -75,7 +75,8 @@ bool readWord(It readFrom, It readTo, State<CTerminal, CStack> const& state,
 
 template <typename CTerminal, typename CStack = CTerminal> struct Automata
 {
-	const std::shared_ptr<AlphabetTouple<CTerminal, CStack>> alphabets;
+	const std::shared_ptr<AlphabetLike<CStack>> stackAlphabet;
+	const std::shared_ptr<AlphabetLike<CTerminal>> wordAlphabet;
 
 	const std::forward_list<State<CTerminal, CStack>> states;
 
@@ -84,7 +85,7 @@ template <typename CTerminal, typename CStack = CTerminal> struct Automata
 
 	bool readWord(AlphaString<CTerminal> const& string)
 	{
-		Stack<CStack> stack{alphabets->N, stackBottom};
+		Stack<CStack> stack{stackAlphabet, stackBottom};
 		return context_free::readWord(string.string.begin(),
 		                              string.string.end(), start, stack);
 	}
