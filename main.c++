@@ -12,26 +12,8 @@ auto toSharedAlphabet(std::string const& string)
 	return std::make_shared<Alphabet<LetterChar>>(string);
 }
 
-int main()
+decltype(Automata<LetterChar>::states) createMyAutomata()
 {
-	std::string terminals = "abcdefghijklmnopqrstuvwxyz",
-	            variables = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-	CFGrammarTouple grammar =
-	    parseGrammar(std::cin, std::make_shared<AlphabetToupleDistinct<LetterChar>>(
-	                               toSharedAlphabet(variables),
-	                               toSharedAlphabet(terminals)));
-
-	auto& alphabets = grammar.alphabets;
-
-	std::cout << "Non-termianls: " << *alphabets->N << std::endl;
-	std::cout << "Termianls: " << *alphabets->T << std::endl;
-
-	for (auto& rule : grammar.rules) {
-		std::cout << "The grammar has a rule from " << rule.from << " to "
-		          << rule.to << std::endl;
-	}
-
 	using State = State<LetterChar, LetterChar>;
 	using Command = StackCommand<LetterChar>;
 
@@ -43,11 +25,34 @@ int main()
 	    std::vector<std::pair<std::shared_ptr<Command>, State*>>{
 	        std::make_pair(sleep, &q), std::make_pair(sleep, &p)};
 
-	Automata<LetterChar> automata{alphabets, {p, q, f}};
+	return {p, q, f};
+}
+
+int main()
+{
+	std::string terminals = "abcdefghijklmnopqrstuvwxyz",
+	            variables = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+	CFGrammarTouple grammar = parseGrammar(
+	    std::cin,
+	    std::make_shared<AlphabetToupleDistinct<LetterChar>>(
+	        toSharedAlphabet(variables), toSharedAlphabet(terminals)));
+
+	auto& alphabets = grammar.alphabets;
+
+	std::cout << "Non-termianls: " << *alphabets->N << std::endl;
+	std::cout << "Termianls: " << *alphabets->T << std::endl;
+
+	for (auto& rule : grammar.rules) {
+		std::cout << "The grammar has a rule from " << rule.from << " to "
+		          << rule.to << std::endl;
+	}
+
+	Automata<LetterChar> automata{alphabets, createMyAutomata()};
 
 	std::cout << "Start: " << automata.start.human_name << std::endl;
 
-	for (State const& s : automata.states) {
+	for (auto const& s : automata.states) {
 		std::cout << "State: " << s.human_name << std::endl;
 		s.printTransitions(std::cout);
 	}
