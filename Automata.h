@@ -41,13 +41,12 @@ template <typename CTerminal, typename CStack> struct State
 	void printTransitions(std::ostream& out) const
 	{
 		for (auto const& [from, to] : transitions) {
-			for (auto const& to : to) {
-				const StackCommand<CStack>& cmd = *to.first;
+			for (auto const& [command, targetState] : to) {
 				out << " | ";
 				printOrMissing(out, from.first);
 				out << ", " << from.second << " --> ";
-				cmd.print(out);
-				out << " -> " << to.second->human_name << std::endl;
+				command->print(out);
+				out << " -> " << targetState->human_name << std::endl;
 			}
 		}
 	}
