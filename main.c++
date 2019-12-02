@@ -12,12 +12,20 @@ auto toSharedAlphabet(std::string const& string)
 	return std::make_shared<Alphabet<LetterChar>>(string);
 }
 
-decltype(Automata<LetterChar>::states) createMyAutomata()
+auto createMyStates()
 {
 	using State = State<LetterChar, LetterChar>;
 	using Command = StackCommand<LetterChar>;
 
-	State p{"p"}, q{"q"}, f{"f"};
+	std::remove_const_t<decltype(Automata<LetterChar>::states)> states;
+
+	states.emplace_front("p");
+	auto& p = states.front();
+
+	states.emplace_front("q");
+	auto& q = states.front();
+
+	states.emplace_front("f");
 
 	auto sleep = std::make_shared<Sleep<LetterChar>>();
 
@@ -25,7 +33,7 @@ decltype(Automata<LetterChar>::states) createMyAutomata()
 	    std::vector<std::pair<std::shared_ptr<Command>, State*>>{
 	        std::make_pair(sleep, &q), std::make_pair(sleep, &p)};
 
-	return {p, q, f};
+	return states;
 }
 
 int main()
@@ -48,7 +56,7 @@ int main()
 		          << rule.to << std::endl;
 	}
 
-	Automata<LetterChar> automata{alphabets, createMyAutomata()};
+	Automata<LetterChar> automata{alphabets, createMyStates()};
 
 	std::cout << "Start: " << automata.start.human_name << std::endl;
 

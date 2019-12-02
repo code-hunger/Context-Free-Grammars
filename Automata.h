@@ -2,6 +2,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include <forward_list>
 
 #include "AlphaString.h"
 #include "AlphabetTouple.h"
@@ -12,7 +13,11 @@ namespace context_free {
 
 template <typename CTerminal, typename CStack> struct State
 {
-	const std::string human_name = std::to_string(static_cast<int>(this));
+	const std::string human_name;
+
+	State(std::string name) : human_name(name) {}
+	State(State&&) = delete; //{ throw std::runtime_error("Should never happen"); }; // Needed if the automata uses std::vector for storing States
+	State(State const&) = delete;
 
 	std::map<
 	    std::pair<std::optional<CStack>, CTerminal>,
@@ -73,7 +78,7 @@ template <typename CTerminal, typename CStack = CTerminal> struct Automata
 {
 	const std::shared_ptr<AlphabetTouple<CTerminal, CStack>> alphabets;
 
-	const std::vector<State<CTerminal, CStack>> states;
+	const std::forward_list<State<CTerminal, CStack>> states;
 
 	const State<CTerminal, CStack>& start = states.front();
 	const std::optional<CStack> stackBottom{};
