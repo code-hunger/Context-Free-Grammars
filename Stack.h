@@ -11,7 +11,19 @@ namespace context_free {
 
 template <typename C> struct Stack
 {
-	// template <typename _> friend struct StackCommand;
+private:
+	std::stack<const C*> stack{};
+
+public:
+	const std::shared_ptr<AlphabetLike<C>> alphabet;
+
+	const std::optional<C> bottom = std::nullopt;
+
+	Stack(decltype(alphabet) alphabet, std::optional<C> bottom)
+	    : alphabet{alphabet}, bottom{bottom}
+	{
+		if (bottom) push(*bottom);
+	}
 
 	std::optional<C> top() const
 	{
@@ -21,14 +33,6 @@ template <typename C> struct Stack
 	}
 
 	bool empty() const { return stack.empty(); }
-
-	const std::shared_ptr<AlphabetLike<C>> alphabet;
-
-	Stack(decltype(alphabet) alphabet, std::optional<C> bottom)
-	    : alphabet(alphabet)
-	{
-		if (bottom) push(*bottom);
-	}
 
 	void push(C const& c)
 	{
@@ -46,9 +50,6 @@ template <typename C> struct Stack
 			throw std::runtime_error("Cannot call Pop() on an empty stack");
 		stack.pop();
 	}
-
-private:
-	std::stack<const C*> stack{};
 };
 
 } // namespace context_free
