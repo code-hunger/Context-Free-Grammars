@@ -12,28 +12,27 @@ auto toSharedAlphabet(std::string const& string)
 	return std::make_shared<Alphabet<LetterChar>>(string);
 }
 
-auto createMyStates()
+auto createMeatBalls()
 {
-	using State = State<LetterChar, LetterChar>;
 	using Command = StackCommand<LetterChar>;
 
-	std::remove_const_t<decltype(Automata<LetterChar>::states)> states;
+	std::remove_const_t<decltype(Automata<LetterChar>::meatBalls)> meatBalls;
 
-	states.emplace_front("p");
-	auto& p = states.front();
+	meatBalls.emplace_front("f");
 
-	states.emplace_front("q");
-	auto& q = states.front();
+	meatBalls.emplace_front("q");
+	auto& q = meatBalls.front();
 
-	states.emplace_front("f");
+	meatBalls.emplace_front("p");
+	auto& p = meatBalls.front();
 
 	auto sleep = std::make_shared<Sleep<LetterChar>>();
 
-	p.transitions[std::make_pair('a', 'E')] =
-	    std::vector<std::pair<std::shared_ptr<Command>, State*>>{
-	        std::make_pair(sleep, &q), std::make_pair(sleep, &p)};
+	p.transitions[std::make_pair('a', 'E')] = std::vector<
+	    std::pair<std::shared_ptr<Command>, MeatBall<LetterChar, LetterChar>*>>{
+	    std::make_pair(sleep, &q), std::make_pair(sleep, &p)};
 
-	return states;
+	return meatBalls;
 }
 
 int main()
@@ -56,17 +55,18 @@ int main()
 		          << rule.to << std::endl;
 	}
 
-	Automata<LetterChar> automata{alphabets->N, alphabets->T, createMyStates()};
+	Automata<LetterChar> automata{alphabets->N, alphabets->T, createMeatBalls()};
 
 	std::cout << "Start: " << automata.start.human_name << std::endl;
 
-	for (auto const& s : automata.states) {
-		std::cout << "State: " << s.human_name << std::endl;
+	for (auto const& s : automata.meatBalls) {
+		std::cout << "MeatBall: " << s.human_name << std::endl;
 		s.printTransitions(std::cout);
 	}
 
-	std::cout << automata.readWord(parseString(std::cin, alphabets->T))
-	          << std::endl;
+	while (!streamFinished(std::cin))
+		std::cout << automata.readWord(parseString(std::cin, alphabets->T))
+		          << std::endl;
 
 	std::cout << "Bye!" << std::endl;
 
