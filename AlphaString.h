@@ -16,6 +16,9 @@ struct AlphaString : FunctorLike<const C&>, FunctorLike<const C*>
 	 */
 	const std::vector<const C*> string;
 
+	using iterator = typename decltype(string)::iterator;
+	using const_iterator = typename decltype(string)::const_iterator;
+
 	void print(std::ostream& out) const
 	{
 		if (string.size() == 0) {

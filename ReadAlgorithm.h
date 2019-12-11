@@ -1,30 +1,31 @@
 #pragma once
 
 #include "AlphaString.h"
-#include "Stack.h"
 #include "MeatBall.h"
+#include "Stack.h"
+#include <forward_list>
 
 namespace context_free {
 
-template <typename CTerminal, typename CStack,
-          typename It = typename AlphaString<CTerminal>::string::const_iterator>
-bool readWord(It readFrom, It readTo, MeatBall<CTerminal, CStack> const& meatBall,
-              Stack<CStack>& stack)
+template <typename CTerminal, typename CStack> class ReadState
 {
-	if (readFrom == readTo) return stack.empty();
+	using Word = AlphaString<CTerminal>;
+	using WordPtr = typename Word::iterator;
 
-	const CTerminal* nextChar = *readFrom;
+	using StateHead =
+	    std::tuple<MeatBall<CTerminal, CStack>*, Stack<CStack>, WordPtr>;
 
-	auto const& transitions = meatBall.next(stack, *nextChar);
+	std::forward_list<StateHead> heads;
 
-	for (auto const& [cmd, targetMeatBall] : transitions) {
-		cmd->execute(stack);
-		if (readWord(readFrom + 1, readTo, *targetMeatBall, stack)) return true;
+	using HeadsIt = typename decltype(heads)::iterator;
 
-		cmd->undo(stack);
+public:
+	const Word word;
+
+	bool advance(HeadsIt head)
+	{
+		throw std::runtime_error("To be implemented.");
 	}
-
-	return false;
-}
+};
 
 } // namespace context_free
