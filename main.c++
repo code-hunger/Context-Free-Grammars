@@ -64,9 +64,25 @@ int main()
 		s.printTransitions(std::cout);
 	}
 
-	while (!streamFinished(std::cin))
-		std::cout << automata.readWord(parseString(std::cin, alphabets->T))
-		          << std::endl;
+	while (!streamFinished(std::cin)) {
+		auto word = parseString(std::cin, alphabets->T);
+		auto reader = automata.createReader(word);
+
+		int n = 0;
+		bool found = false;
+		if (!(std::cin >> n)) break;
+		for (int i = 0; i < n; ++i) {
+			const auto result = reader.advance();
+
+			if (result) {
+				found = true;
+				std::cout << "WORD \"" << word << "\" RECOGNIZED!" << std::endl;
+			}
+		}
+
+		if (!found)
+			std::cout << "Word \"" << word << "\" not recognized." << std::endl;
+	}
 
 	std::cout << "Bye!" << std::endl;
 

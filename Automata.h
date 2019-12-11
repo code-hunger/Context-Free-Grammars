@@ -21,11 +21,10 @@ template <typename CTerminal, typename CStack = CTerminal> struct Automata
 	const MeatBall<CTerminal, CStack>& start = meatBalls.front();
 	const std::optional<CStack> stackBottom{};
 
-	bool readWord(AlphaString<CTerminal> const&)
+	auto createReader(AlphaString<CTerminal> const& word)
 	{
 		Stack<CStack> stack{stackAlphabet, stackBottom};
-		throw std::runtime_error(
-		    "Word recognition unimplemented. Look at ReadAlgorithm.h");
+		return ReadState{word, start, stack};
 	}
 };
 
