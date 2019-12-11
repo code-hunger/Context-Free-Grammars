@@ -10,12 +10,12 @@ namespace context_free {
 template <typename CTerminal, typename CStack> class ReadState
 {
 	using Word = AlphaString<CTerminal>;
-	using WordPtr = typename Word::iterator;
+	using WordPtr = typename Word::const_iterator;
+	using MeatBallT = const MeatBall<CTerminal, CStack>;
 
-	using StateHead =
-	    std::tuple<MeatBall<CTerminal, CStack>*, Stack<CStack>, WordPtr>;
+	using StateHead = std::tuple<MeatBallT*, Stack<CStack>, WordPtr>;
 
-	std::list<StateHead> heads;
+	std::list<StateHead> heads{};
 
 	using HeadsIt = typename decltype(heads)::iterator;
 
@@ -28,7 +28,7 @@ template <typename CTerminal, typename CStack> class ReadState
 			return stack.empty();
 		}
 
-		auto const& transitions = meatBall->next(stack, *nextChar);
+		auto const& transitions = meatBall->next(stack, **nextChar);
 
 		for (auto const& [cmd, targetMeatBall] : transitions) {
 			auto newStack{stack};
@@ -44,14 +44,24 @@ template <typename CTerminal, typename CStack> class ReadState
 public:
 	const Word word;
 
+	ReadState(Word const& word, MeatBallT const& meatBall,
+	          Stack<CStack> const& stack)
+	    : word(word)
+	{
+		StateHead init(&meatBall, stack, word.string.begin());
+		heads.push_back(init);
+	}
+
 	std::optional<StateHead> advance()
 	{
-		for (auto it = heads.begin(); it != heads.end(); ++it) {
-			if (advance(*it)) {
+		for (HeadsIt it = heads.begin(); it != heads.end(); ) {
+			if (advance(it)) {
 				return *it;
 			}
 
-			heads.erase(it);
+			auto old = it;
+			++it;
+			heads.erase(old);
 		}
 
 		return std::nullopt;
