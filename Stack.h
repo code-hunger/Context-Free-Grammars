@@ -17,13 +17,7 @@ private:
 public:
 	const std::shared_ptr<AlphabetLike<C>> alphabet;
 
-	const std::optional<C> bottom = std::nullopt;
-
-	Stack(decltype(alphabet) alphabet, std::optional<C> bottom)
-	    : alphabet{alphabet}, bottom{bottom}
-	{
-		if (bottom) push(*bottom);
-	}
+	Stack(decltype(alphabet) alphabet) : alphabet{alphabet} {}
 
 	std::optional<C> top() const
 	{

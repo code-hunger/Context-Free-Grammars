@@ -4,9 +4,9 @@
 
 #include "AlphaString.h"
 #include "AlphabetTouple.h"
+#include "BottomedStack.h"
 #include "MeatBall.h"
 #include "ReadAlgorithm.h"
-#include "Stack.h"
 #include "StackCommands.h"
 
 namespace context_free {
@@ -19,11 +19,11 @@ template <typename CTerminal, typename CStack = CTerminal> struct Automata
 	const std::forward_list<MeatBall<CTerminal, CStack>> meatBalls;
 
 	const MeatBall<CTerminal, CStack>& start = meatBalls.front();
-	const std::optional<CStack> stackBottom{};
 
-	auto createReader(AlphaString<CTerminal> const& word)
+	auto createReader(AlphaString<CTerminal> const& word,
+	                  std::optional<CStack> bottom = std::nullopt)
 	{
-		Stack<CStack> stack{stackAlphabet, stackBottom};
+		BottomedStack<CStack> stack{stackAlphabet, bottom};
 		return ReadState{word, start, stack};
 	}
 };
