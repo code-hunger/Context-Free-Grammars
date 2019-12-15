@@ -31,8 +31,10 @@ template <typename C> struct CharUnion<C, C>;
 template <typename CN, typename CT = CN>
 struct AlphabetTouple : public AlphabetLike<CN>, public AlphabetLike<CT>
 {
-	const std::shared_ptr<Alphabet<CN>> N;
-	const std::shared_ptr<Alphabet<CT>> T;
+	using char_type = CharUnion<CN, CT>;
+
+	const std::shared_ptr<AlphabetLike<CN>> N;
+	const std::shared_ptr<AlphabetLike<CT>> T;
 
 	const CN* findChar(CN const& c) const override { return N->findChar(c); };
 
@@ -68,7 +70,9 @@ struct AlphabetTouple : public AlphabetLike<CN>, public AlphabetLike<CT>
 
 template <typename C> struct AlphabetTouple<C, C> : public AlphabetLike<C>
 {
-	const std::shared_ptr<Alphabet<C>> N, T;
+	using char_type = C;
+
+	const std::shared_ptr<AlphabetLike<C>> N, T;
 
 	const C* findChar(C const& c) const override
 	{
@@ -99,6 +103,8 @@ struct AlphabetToupleDistinct : public AlphabetTouple<CN, CT>
 	 * no need for any checks.
 	 */
 	using parent = AlphabetTouple<CN, CT>;
+	using char_type = CharUnion<CN, CT>;
+
 	AlphabetToupleDistinct(decltype(parent::N) N, decltype(parent::T) T)
 	    : parent(N, T)
 	{
@@ -119,6 +125,7 @@ struct AlphabetToupleDistinct<C, C> : public AlphabetTouple<C, C>
 	 * for uniqueness of the elemnets of the 2 alphabets.
 	 */
 	using parent = AlphabetTouple<C, C>;
+	using char_type = C;
 	AlphabetToupleDistinct(decltype(parent::N) N, decltype(parent::T) T)
 	    : parent(N, T)
 	{
