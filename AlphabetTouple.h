@@ -31,8 +31,6 @@ template <typename C> struct CharUnion<C, C>;
 template <typename CN, typename CT = CN>
 struct AlphabetTouple : public AlphabetLike<CharUnion<CN, CT>>
 {
-	using C = std::enable_if_t<std::is_same<CN, CT>::value, CN>;
-
 	const std::shared_ptr<Alphabet<CN>> N;
 	const std::shared_ptr<Alphabet<CT>> T;
 
