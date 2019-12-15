@@ -29,7 +29,7 @@ template <typename C1, typename C2> struct CharUnion
 template <typename C> struct CharUnion<C, C>;
 
 template <typename CN, typename CT = CN>
-struct AlphabetTouple : public AlphabetLike<CharUnion<CN, CT>>
+struct AlphabetTouple : public AlphabetLike<CN>, public AlphabetLike<CT>
 {
 	const std::shared_ptr<Alphabet<CN>> N;
 	const std::shared_ptr<Alphabet<CT>> T;
@@ -37,6 +37,31 @@ struct AlphabetTouple : public AlphabetLike<CharUnion<CN, CT>>
 	const CN* findChar(CN const& c) const override { return N->findChar(c); };
 
 	const CT* findChar(CT const& c) const override { return T->findChar(c); };
+
+	bool all_of(std::function<bool(const CN*)> const& f) const override
+	{
+		return N->all_of(f);
+	};
+
+	void for_each(std::function<void(const CN*)> const& f) const override
+	{
+		N->for_each(f);
+	};
+
+	bool all_of(std::function<bool(const CT*)> const& f) const override
+	{
+		return T->all_of(f);
+	};
+
+	void for_each(std::function<void(const CT*)> const& f) const override
+	{
+		T->for_each(f);
+	};
+
+	auto findChar(CharUnion<CN, CT> c) const
+	{
+		return std::visit([this](auto c) { this->findChar(c); }, c);
+	}
 
 	AlphabetTouple(decltype(N) N, decltype(T) T) : N(N), T(T) {}
 };
