@@ -28,9 +28,8 @@ auto createMeatBalls()
 
 	auto sleep = std::make_shared<Sleep<LetterChar>>();
 
-	p.transitions[std::make_pair('a', 'E')] = std::vector<
-	    std::pair<std::shared_ptr<Command>, MeatBall<LetterChar, LetterChar>*>>{
-	    std::make_pair(sleep, &q), std::make_pair(sleep, &p)};
+	p.addTransition({'a'}, {'E'}, sleep, q);
+	p.addTransition({'a'}, {'E'}, sleep, p);
 
 	return meatBalls;
 }
@@ -55,7 +54,8 @@ int main()
 		          << rule.to << std::endl;
 	}
 
-	Automata<LetterChar> automata{alphabets->N, alphabets->T, createMeatBalls()};
+	Automata<LetterChar> automata{alphabets->N, alphabets->T,
+	                              createMeatBalls()};
 
 	std::cout << "Start: " << automata.start.human_name << std::endl;
 
