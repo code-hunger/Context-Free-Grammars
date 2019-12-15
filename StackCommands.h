@@ -18,6 +18,8 @@ template <typename C> struct StackCommand
 
 template <typename C> struct Pop : StackCommand<C>
 {
+	Pop() = default;
+
 	void print(std::ostream& out) const override { out << "Pop"; }
 
 	void execute(Stack<C>& stack) override
@@ -59,6 +61,9 @@ template <typename C> struct Sleep : StackCommand<C>
 template <typename C> struct Push : StackCommand<C>
 {
 	const C what;
+
+	Push(C const& what) : what(what) {}
+
 	void print(std::ostream& out) const override
 	{
 		out << "Push<" << what << ">";
