@@ -54,6 +54,8 @@ template <typename T> struct FunctorLike
 
 template <typename C> struct AlphabetLike : FunctorLike<const C*>
 {
+	using char_type = C;
+
 	virtual const C* findChar(C const&) const = 0;
 
 	bool subsetOf(AlphabetLike<C> const& other) const
