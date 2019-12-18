@@ -14,11 +14,38 @@ template <typename C1, typename C2> struct CharUnion
 
 	void print(std::ostream& out) const
 	{
-		constexpr auto CharPrinter = [&out](const auto* t) { out << *t; };
+		auto CharPrinter = [&out](const auto* t) { t->print(out); };
 
 		std::visit(CharPrinter, value);
 	};
+
+	bool operator==(CharUnion<C1, C2> const& other) const
+	{
+		return value == other.value;
+	}
+
+	operator bool() const
+	{
+		bool isEmpty = false;
+		std::visit(
+		    [&isEmpty](auto x) {
+			    if (!x) isEmpty = true;
+		    },
+		    value);
+		return isEmpty;
+	}
+
+	template <typename P> auto visit(P predicate) const
+	{
+		return std::visit(predicate, value);
+	}
 };
+
+template <typename C1, typename C2>
+inline bool operator<(CharUnion<C1, C2> const& a, CharUnion<C1, C2> const& b)
+{
+	return a.value < b.value;
+}
 
 /*
  * A CharUnion makes no sense when C1 == C2.
