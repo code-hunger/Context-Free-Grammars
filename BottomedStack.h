@@ -7,11 +7,11 @@
 
 namespace context_free {
 
-template <typename C> struct BottomedStack : Stack<C>
+template <typename C, typename CPtrBox> struct BottomedStack : Stack<C, CPtrBox>
 {
 private:
 	bool hasBottom = true;
-	using parent = Stack<C>;
+	using parent = Stack<C, CPtrBox>;
 
 public:
 	const std::optional<C> bottom;
