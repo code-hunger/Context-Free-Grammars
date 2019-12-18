@@ -6,59 +6,41 @@
 
 namespace context_free {
 
-template <typename C> struct StackCommand
+template <typename C, typename CPtrBox> struct StackCommand
 {
 	virtual void print(std::ostream&) const = 0;
-	virtual void execute(Stack<C>& stack) = 0;
-
-	virtual void undo(Stack<C>& stack) = 0;
+	virtual void execute(Stack<C, CPtrBox>& stack) const = 0;
 
 	virtual ~StackCommand() {}
 };
 
-template <typename C> struct Pop : StackCommand<C>
+template <typename C, typename CPtrBox> struct Pop : StackCommand<C, CPtrBox>
 {
 	Pop() = default;
 
 	void print(std::ostream& out) const override { out << "Pop"; }
 
-	void execute(Stack<C>& stack) override
+	void execute(Stack<C, CPtrBox>& stack) const override
 	{
 		if (stack.empty())
 			throw std::runtime_error("Cannot call Pop() on an empty stack");
 
-		valuePopped = stack.top();
 		stack.pop();
 	}
 
-	void undo(Stack<C>& stack) override
-	{
-		if (!valuePopped.has_value())
-			throw std::runtime_error("This Pop command has not been executed "
-			                         "or has been already undone.");
-
-		stack.push(*valuePopped);
-		valuePopped = std::nullopt;
-	}
-
 	~Pop() {}
-
-private:
-	std::optional<C> valuePopped;
 };
 
-template <typename C> struct Sleep : StackCommand<C>
+template <typename C, typename CPtrBox> struct Sleep : StackCommand<C, CPtrBox>
 {
 	void print(std::ostream& out) const override { out << "Sleep"; }
 
-	void execute(Stack<C>&) override {}
-
-	void undo(Stack<C>&) override {}
+	void execute(Stack<C, CPtrBox>&) const override {}
 
 	~Sleep() {}
 };
 
-template <typename C> struct Push : StackCommand<C>
+template <typename C, typename CPtrBox> struct Push : StackCommand<C, CPtrBox>
 {
 	const C what;
 
@@ -66,50 +48,44 @@ template <typename C> struct Push : StackCommand<C>
 
 	void print(std::ostream& out) const override
 	{
-		out << "Push<" << what << ">";
+		out << "Push<";
+		what.print(out);
+		out << ">";
 	}
 
-	void execute(Stack<C>& stack) override { stack.push(what); }
-
-	void undo(Stack<C>& stack) override
-	{
-		if (!stack.top().has_value())
-			throw std::runtime_error(
-			    "Can't undo a 'Push' operation on an empty stack.");
-
-		if (*stack.top() != what)
-			throw std::runtime_error(
-			    "The stack top is not how this Push command would have left "
-			    "it. Refusing to undo.");
-
-		stack.pop();
-	}
+	void execute(Stack<C, CPtrBox>& stack) const override { stack.push(what); }
 
 	~Push() {}
 };
 
-template <typename C> struct Replace : StackCommand<C>
+template <typename C, typename CPtrBox>
+struct Replace : StackCommand<C, CPtrBox>
 {
 	const C with;
+
+	Replace(C const& with) : with(with) {}
+
 	void print(std::ostream& out) const override
 	{
-		out << "Replace<" << with << ">";
+		out << "Replace<";
+		with.print(out);
+		out << ">";
 	}
 
-	void execute(Stack<C>& stack) override
+	void execute(Stack<C, CPtrBox>& stack) const override
 	{
 		if (stack.empty())
 			throw std::runtime_error(
 			    "Tried to replace the top of an empty stack!");
 
-		const C* inAlphabet = stack.alphabet->findChar(with);
+		CPtrBox inAlphabet = stack.alphabet->findChar(with);
 
 		if (!inAlphabet)
 			throw std::runtime_error("Got an error while executing "
 			                         "Replace() command on the stack. "
 			                         "Stack left unchanged.");
 
-		valueReplaced = stack.top();
+		auto valueReplaced = stack.top();
 
 		try {
 			stack.pop();
@@ -123,7 +99,7 @@ template <typename C> struct Replace : StackCommand<C>
 			stack.push(with);
 		} catch (...) {
 			try {
-				stack.push(valueReplaced);
+				stack.push(*valueReplaced);
 			} catch (...) {
 				std::throw_with_nested(std::runtime_error(
 				    "push() operation during Replace execution failed. "
@@ -135,33 +111,7 @@ template <typename C> struct Replace : StackCommand<C>
 		}
 	}
 
-	void undo(Stack<C>& stack)
-	{
-		// @TODO Sane error checking
-		throw std::runtime_error("undo() on a Replace operation unimplemented");
-
-		if (!valueReplaced.has_value())
-			throw std::runtime_error("This Replace command has not been "
-			                         "executed or has been already undone.");
-
-		if (!stack.top().has_value())
-			throw std::runtime_error(
-			    "Can't undo a 'Replace' operation on an empty stack.");
-
-		if (*stack.top() != with)
-			throw std::runtime_error(
-			    "The stack top is not how this Replace command would have left "
-			    "it. Refusing to undo.");
-
-		stack.pop();
-		stack.push(valueReplaced);
-		valueReplaced = std::nullopt;
-	}
-
 	~Replace() {}
-
-private:
-	std::optional<C> valueReplaced;
 };
 
 } // namespace context_free
