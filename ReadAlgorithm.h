@@ -19,9 +19,9 @@ template <typename CStack, typename CTerminal, typename CStackPtrBox> class Read
 
 	using HeadsIt = typename decltype(heads)::iterator;
 
-	bool advance(HeadsIt head)
+	bool advance(StateHead const& head)
 	{
-		auto& [meatBall, stack, nextChar] = *head;
+		auto& [meatBall, stack, nextChar] = head;
 
 		if (nextChar == word.string.end()) { // No more chars to read.
 			// Hope we found it
@@ -55,7 +55,7 @@ public:
 	std::optional<StateHead> advance()
 	{
 		for (HeadsIt it = heads.begin(); it != heads.end(); ) {
-			if (advance(it)) {
+			if (advance(*it)) {
 				return *it;
 			}
 
