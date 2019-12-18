@@ -11,20 +11,20 @@
 
 namespace context_free {
 
-template <typename CTerminal, typename CStack = CTerminal> struct Automata
+template <typename CStack, typename CTerminal, typename CStackPtrBox> struct Automata
 {
-	const std::shared_ptr<AlphabetLike<CStack>> stackAlphabet;
+	const std::shared_ptr<AlphabetLike<CStack, CStackPtrBox>> stackAlphabet;
 	const std::shared_ptr<AlphabetLike<CTerminal>> wordAlphabet;
 
-	const std::forward_list<MeatBall<CTerminal, CStack>> meatBalls;
+	const std::forward_list<MeatBall<CStack, CTerminal, CStackPtrBox>> meatBalls;
 
-	const MeatBall<CTerminal, CStack>& start = meatBalls.front();
+	const MeatBall<CStack, CTerminal, CStackPtrBox>& start = meatBalls.front();
 
 	auto createReader(AlphaString<CTerminal> const& word,
 	                  std::optional<CStack> bottom = std::nullopt)
 	{
-		BottomedStack<CStack> stack{stackAlphabet, bottom};
-		return ReadState{word, start, stack};
+		BottomedStack<CStack, CStackPtrBox> stack{stackAlphabet, bottom};
+		return ReadState<CStack, CTerminal, CStackPtrBox>{word, start, stack};
 	}
 };
 

@@ -7,13 +7,13 @@
 
 namespace context_free {
 
-template <typename CTerminal, typename CStack> class ReadState
+template <typename CStack, typename CTerminal, typename CStackPtrBox> class ReadState
 {
 	using Word = AlphaString<CTerminal>;
 	using WordPtr = typename Word::const_iterator;
-	using MeatBallT = const MeatBall<CTerminal, CStack>;
+	using MeatBallT = const MeatBall<CStack, CTerminal, CStackPtrBox>;
 
-	using StateHead = std::tuple<MeatBallT*, Stack<CStack>, WordPtr>;
+	using StateHead = std::tuple<MeatBallT*, Stack<CStack, CStackPtrBox>, WordPtr>;
 
 	std::list<StateHead> heads{};
 
@@ -45,7 +45,7 @@ public:
 	const Word word;
 
 	ReadState(Word const& word, MeatBallT const& meatBall,
-	          Stack<CStack> const& stack)
+	          Stack<CStack, CStackPtrBox> const& stack)
 	    : word(word)
 	{
 		StateHead init(&meatBall, stack, word.string.begin());

@@ -5,16 +5,16 @@
 namespace context_free {
 using std::shared_ptr;
 
-template <typename C>
-struct AlphaString : FunctorLike<const C&>, FunctorLike<const C*>
+template <typename C, typename CPtrBox = const C*>
+struct AlphaString : FunctorLike<C>, FunctorLike<CPtrBox>
 {
-	const shared_ptr<AlphabetLike<C>> alphabet;
+	const shared_ptr<AlphabetLike<C, CPtrBox>> alphabet;
 
 	/*
 	 * Invariant: all chars string[i] are in the alphabet S
 	 * i.e. std::all_of(begin(string), end(string), S.hasChar) == true
 	 */
-	const std::vector<const C*> string;
+	const std::vector<CPtrBox> string;
 
 	using iterator = typename decltype(string)::iterator;
 	using const_iterator = typename decltype(string)::const_iterator;
@@ -31,12 +31,12 @@ struct AlphaString : FunctorLike<const C&>, FunctorLike<const C*>
 		}
 	}
 
-	void for_each(std::function<void(const C*)> const& p) const override
+	void for_each(std::function<void(CPtrBox const&)> const& p) const override
 	{
 		std::for_each(string.begin(), string.end(), p);
 	}
 
-	bool all_of(std::function<bool(const C*)> const& p) const override
+	bool all_of(std::function<bool(CPtrBox const&)> const& p) const override
 	{
 		return std::all_of(string.begin(), string.end(), p);
 	}
@@ -64,13 +64,14 @@ struct AlphaString : FunctorLike<const C&>, FunctorLike<const C*>
 	static AlphaString<LetterChar> parseString(shared_ptr<Alphabet<LetterChar>>,
 	                                           std::string const&);
 
-	static AlphaString<C> parseString(shared_ptr<AlphabetLike<C>> alphabet,
-	                                  std::string const& str)
+	static AlphaString<C, CPtrBox>
+	parseString(shared_ptr<AlphabetLike<C, CPtrBox>> alphabet,
+	            std::string const& str)
 	{
 		if (str.size() <= 1 && str[0] == '@')
 			return {Alphabet<LetterChar>::constructEmpty(), {}};
 
-		std::vector<const C*> new_string;
+		std::vector<CPtrBox> new_string;
 
 		for (C const& c : str) {
 			auto in_alphabet = alphabet->findChar(c);
@@ -87,8 +88,8 @@ struct AlphaString : FunctorLike<const C&>, FunctorLike<const C*>
 	}
 
 private:
-	AlphaString(shared_ptr<AlphabetLike<C>> alphabet,
-	            const std::vector<const C*>&& string)
+	AlphaString(shared_ptr<AlphabetLike<C, CPtrBox>> alphabet,
+	            const std::vector<CPtrBox>&& string)
 	    : alphabet(alphabet), string(std::move(string))
 	{
 	}
