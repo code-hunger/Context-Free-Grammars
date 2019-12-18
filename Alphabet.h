@@ -46,27 +46,28 @@ inline std::ostream& operator<<(std::ostream& out, LetterChar const& c)
 
 template <typename T> struct FunctorLike
 {
-	virtual bool all_of(std::function<bool(T)> const&) const = 0;
-	virtual void for_each(std::function<void(T)> const&) const = 0;
+	virtual bool all_of(std::function<bool(T const&)> const&) const = 0;
+	virtual void for_each(std::function<void(T const&)> const&) const = 0;
 
 	virtual ~FunctorLike() = default;
 };
 
-template <typename C> struct AlphabetLike : FunctorLike<const C*>
+template <typename C, typename CPtrBox = const C*>
+struct AlphabetLike : FunctorLike<C>
 {
 	using char_type = C;
+	using char_box_type = CPtrBox;
 
-	virtual const C* findChar(C const&) const = 0;
+	virtual CPtrBox findChar(C const&) const = 0;
 
 	bool subsetOf(AlphabetLike<C> const& other) const
 	{
-		return this->all_of(
-		    [&other](const C* c) { return other.findChar(*c); });
+		return this->all_of([&other](C const& c) { return other.findChar(c); });
 	}
 
 	void print(std::ostream& out) const
 	{
-		this->for_each([&out](const C* c) { c->print(out); });
+		this->for_each([&out](C const& c) { c.print(out); });
 	}
 
 	AlphabetLike() = default;
@@ -87,7 +88,7 @@ std::vector<unique_ptr<C>> stringToPtrVec(std::string const& string)
 	return vector;
 }
 
-template <typename C> class Alphabet : public AlphabetLike<C>
+template <typename C> class Alphabet : public AlphabetLike<C, const C*>
 {
 	/*
 	 * An immutable object representing a finite alphabet
@@ -157,26 +158,32 @@ public:
 	auto begin() const { return std::begin(chars); }
 	auto end() const { return std::end(chars); }
 
-	bool all_of(std::function<bool(const C*)> const& predicate) const override
+	bool all_of(std::function<bool(C const&)> const& predicate) const override
 	{
-		return std::all_of(begin(), end(), predicate);
+		for (const C* c : *this)
+			if (!predicate(*c)) return false;
+		return true;
 	}
 
-	void for_each(std::function<void(const C*)> const& predicate) const override
+	void for_each(std::function<void(C const&)> const& predicate) const override
 	{
-		std::for_each(begin(), end(), predicate);
+		for (const C* c : *this)
+			predicate(*c);
 	}
 
 	~Alphabet()
 	{
-		for_each([](const C* c) { delete c; });
+		for (const C* c : *this) {
+			delete c;
+		}
 	}
 };
 
 template <typename C> std::shared_ptr<Alphabet<C>> Alphabet<C>::emptyAlphabet{};
 
-template <typename C>
-std::ostream& operator<<(std::ostream& out, AlphabetLike<C> const& alphabet)
+template <typename C, typename CPtrBox>
+std::ostream& operator<<(std::ostream& out,
+                         AlphabetLike<C, CPtrBox> const& alphabet)
 {
 	alphabet.print(out);
 	return out;
