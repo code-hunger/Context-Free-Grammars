@@ -56,14 +56,24 @@ struct MeatBall
 			out << '-';
 	}
 
+	static void printOrEpsilon(std::ostream& out,
+	                           std::optional<CTerminal> const& c)
+	{
+		if (c.has_value())
+			c->print(out);
+		else
+			out << "{eps}";
+	}
+
 	void printTransitions(std::ostream& out) const
 	{
 		for (auto const& [from, to] : transitions) {
 			for (auto const& [command, targetMeatBall] : to) {
 				out << " | ";
 				printOrMissing(out, from.first);
-				out << ", " << (from.second ? *from.second : CTerminal{'E'})
-				    << " --> ";
+				out << ", ";
+				printOrEpsilon(out, from.second);
+				out << " --> ";
 				command->print(out);
 				out << " -> " << targetMeatBall->human_name << std::endl;
 			}
