@@ -40,7 +40,7 @@ TAR := tar
 # C flags
 CFLAGS := -std=c11
 # C++ flags
-CXXFLAGS := -std=c++17 -Weffc++ \
+CXXFLAGS := -fdiagnostics-color=always -std=c++17 -Weffc++ \
     -pedantic-errors -Wcast-align \
     -Wcast-qual  -Wchar-subscripts  -Wcomment -Wconversion \
     -Wdisabled-optimization \
