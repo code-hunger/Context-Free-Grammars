@@ -55,10 +55,13 @@ inline bool operator<(CharUnion<C1, C2> const& a, CharUnion<C1, C2> const& b)
  */
 template <typename C> struct CharUnion<C, C>;
 
-template <typename CN, typename CT = CN>
-struct AlphabetTouple : public AlphabetLike<CN>, public AlphabetLike<CT>
+template <typename CN, typename CT = CN, typename CPtrBox = CharUnion<CN, CT>>
+struct AlphabetTouple : public AlphabetLike<CN>,
+                        public AlphabetLike<CT>,
+                        public AlphabetLike<CharUnion<CN, CT>, CPtrBox>
 {
 	using char_type = CharUnion<CN, CT>;
+	using char_box_type = CPtrBox;
 
 	const std::shared_ptr<AlphabetLike<CN>> N;
 	const std::shared_ptr<AlphabetLike<CT>> T;
@@ -67,53 +70,82 @@ struct AlphabetTouple : public AlphabetLike<CN>, public AlphabetLike<CT>
 
 	const CT* findChar(CT const& c) const override { return T->findChar(c); };
 
-	bool all_of(std::function<bool(const CN*)> const& f) const override
+	bool all_of(std::function<bool(CN const&)> const& f) const override
 	{
 		return N->all_of(f);
 	};
 
-	void for_each(std::function<void(const CN*)> const& f) const override
+	void for_each(std::function<void(CN const&)> const& f) const override
 	{
 		N->for_each(f);
 	};
 
-	bool all_of(std::function<bool(const CT*)> const& f) const override
+	bool all_of(std::function<bool(CT const&)> const& f) const override
 	{
 		return T->all_of(f);
 	};
 
-	void for_each(std::function<void(const CT*)> const& f) const override
+	void for_each(std::function<void(CT const&)> const& f) const override
 	{
 		T->for_each(f);
 	};
 
-	auto findChar(CharUnion<CN, CT> c) const
+	bool all_of(std::function<bool(CharUnion<CN, CT> const&)> const& predicate)
+	    const override
 	{
-		return std::visit([this](auto c) { this->findChar(c); }, c);
+		auto forN = [&predicate](CN const& arg) {
+			return predicate(char_type{&arg});
+		};
+		auto forT = [&predicate](CT const& arg) {
+			return predicate(char_type{&arg});
+		};
+		return N->all_of(forN) && T->all_of(forT);
+	}
+
+	void for_each(std::function<void(CharUnion<CN, CT> const&)> const&
+	                  predicate) const override
+	{
+		auto forN = [&predicate](CN const& arg) {
+			return predicate(char_type{&arg});
+		};
+		auto forT = [&predicate](CT const& arg) {
+			return predicate(char_type{&arg});
+		};
+		N->for_each(forN);
+		T->for_each(forT);
+	}
+
+	CPtrBox findChar(CharUnion<CN, CT> const& c) const override
+	{
+		return c.visit([this](auto c) -> CPtrBox {
+			if (c == nullptr) {
+				throw std::runtime_error("The given char union is empty!!");
+			}
+			return CPtrBox{this->findChar(*c)};
+		});
 	}
 
 	AlphabetTouple(decltype(N) N, decltype(T) T) : N(N), T(T) {}
 };
 
-template <typename C> struct AlphabetTouple<C, C> : public AlphabetLike<C>
+template <typename C, typename CPtrBox>
+struct AlphabetTouple<C, C, CPtrBox> : public AlphabetLike<C, CPtrBox>
 {
-	using char_type = C;
-
 	const std::shared_ptr<AlphabetLike<C>> N, T;
 
-	const C* findChar(C const& c) const override
+	CPtrBox findChar(C const& c) const override
 	{
 		// c is guaranteed to be at most in one of N and T.
 		if (auto a = N->findChar(c)) return a;
 		return T->findChar(c);
 	}
 
-	bool all_of(std::function<bool(const C*)> const& predicate) const override
+	bool all_of(std::function<bool(C const&)> const& predicate) const override
 	{
 		return N->all_of(predicate) && T->all_of(predicate);
 	}
 
-	void for_each(std::function<void(const C*)> const& predicate) const override
+	void for_each(std::function<void(C const&)> const& predicate) const override
 	{
 		N->for_each(predicate);
 		T->for_each(predicate);
@@ -122,15 +154,14 @@ template <typename C> struct AlphabetTouple<C, C> : public AlphabetLike<C>
 	AlphabetTouple(decltype(N) N, decltype(T) T) : N(N), T(T) {}
 };
 
-template <typename CN, typename CT = CN>
-struct AlphabetToupleDistinct : public AlphabetTouple<CN, CT>
+template <typename CN, typename CT>
+struct AlphabetToupleDistinct : public AlphabetTouple<CN, CT, CharUnion<CN, CT>>
 {
 	/*
 	 * A touple of 2 alphabets of different Char types is trivially distinct,
 	 * no need for any checks.
 	 */
-	using parent = AlphabetTouple<CN, CT>;
-	using char_type = CharUnion<CN, CT>;
+	using parent = AlphabetTouple<CN, CT, CharUnion<CN, CT>>;
 
 	AlphabetToupleDistinct(decltype(parent::N) N, decltype(parent::T) T)
 	    : parent(N, T)
@@ -138,21 +169,22 @@ struct AlphabetToupleDistinct : public AlphabetTouple<CN, CT>
 	}
 };
 
-template <typename C>
-bool pairwiseDistinct(Alphabet<C> const& A, Alphabet<C> const& B)
+template <typename C, typename CPtrBox>
+bool pairwiseDistinct(AlphabetLike<C, CPtrBox> const& A,
+                      AlphabetLike<C, CPtrBox> const& B)
 {
-	return A.all_of([&B](const C* c) { return !B.findChar(*c); });
+	return A.all_of([&B](C const& c) { return !B.findChar(c); });
 }
 
 template <typename C>
-struct AlphabetToupleDistinct<C, C> : public AlphabetTouple<C, C>
+struct AlphabetToupleDistinct<C, C> : public AlphabetTouple<C, C, const C*>
 {
 	/*
 	 * A touple of 2 alphabets of the same Char type must be manually checked
 	 * for uniqueness of the elemnets of the 2 alphabets.
 	 */
-	using parent = AlphabetTouple<C, C>;
-	using char_type = C;
+	using parent = AlphabetTouple<C, C, const C*>;
+
 	AlphabetToupleDistinct(decltype(parent::N) N, decltype(parent::T) T)
 	    : parent(N, T)
 	{
