@@ -47,22 +47,14 @@ struct MeatBall
 		return x != transitions.end() ? x->second : emptyTransition;
 	}
 
-	static void printOrMissing(std::ostream& out,
-	                           std::optional<CStack> const& c)
+	template<typename C>
+	static void printOr(std::ostream& out, std::optional<C> const& c,
+	                    std::string if_empty)
 	{
 		if (c.has_value())
 			c->print(out);
 		else
-			out << '-';
-	}
-
-	static void printOrEpsilon(std::ostream& out,
-	                           std::optional<CTerminal> const& c)
-	{
-		if (c.has_value())
-			c->print(out);
-		else
-			out << "{eps}";
+			out << if_empty;
 	}
 
 	void printTransitions(std::ostream& out) const
@@ -70,9 +62,9 @@ struct MeatBall
 		for (auto const& [from, to] : transitions) {
 			for (auto const& [command, targetMeatBall] : to) {
 				out << " | ";
-				printOrMissing(out, from.first);
+				printOr(out, from.first, "-");
 				out << ", ";
-				printOrEpsilon(out, from.second);
+				printOr(out, from.second, "{eps}");
 				out << " --> ";
 				command->print(out);
 				out << " -> " << targetMeatBall->human_name << std::endl;
