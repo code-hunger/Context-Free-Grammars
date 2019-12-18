@@ -2,6 +2,7 @@
 #include "Automata.h"
 #include "CFGrammar.h"
 #include "CFParser.h"
+#include "PDAlgorithms.h"
 
 #include <iostream>
 
@@ -14,9 +15,9 @@ auto toSharedAlphabet(std::string const& string)
 
 auto createMeatBalls()
 {
-	using Command = StackCommand<LetterChar>;
-
-	std::remove_const_t<decltype(Automata<LetterChar>::meatBalls)> meatBalls;
+	std::remove_const_t<decltype(
+	    Automata<LetterChar, LetterChar, const LetterChar*>::meatBalls)>
+	    meatBalls;
 
 	meatBalls.emplace_front("f");
 
@@ -26,7 +27,7 @@ auto createMeatBalls()
 	meatBalls.emplace_front("p");
 	auto& p = meatBalls.front();
 
-	auto sleep = std::make_shared<Sleep<LetterChar>>();
+	auto sleep = std::make_shared<Sleep<LetterChar, const LetterChar*>>();
 
 	p.addTransition({'a'}, {'E'}, sleep, q);
 	p.addTransition({'a'}, {'E'}, sleep, p);
@@ -36,12 +37,12 @@ auto createMeatBalls()
 
 int main()
 {
-	std::string terminals = "abcdefghijklmnopqrstuvwxyz",
-	            variables = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	std::string terminals = "abc",
+	            variables = "SABC";
 
 	CFGrammarTouple grammar = parseGrammar(
 	    std::cin,
-	    std::make_shared<AlphabetToupleDistinct<LetterChar>>(
+	    std::make_shared<AlphabetToupleDistinct<LetterChar, LetterChar>>(
 	        toSharedAlphabet(variables), toSharedAlphabet(terminals)));
 
 	auto& alphabets = grammar.alphabets;
@@ -54,8 +55,7 @@ int main()
 		          << rule.to << std::endl;
 	}
 
-	Automata<LetterChar> automata{alphabets->N, alphabets->T,
-	                              createMeatBalls()};
+	auto automata = grammarToAutomata(grammar);
 
 	std::cout << "Start: " << automata.start.human_name << std::endl;
 
