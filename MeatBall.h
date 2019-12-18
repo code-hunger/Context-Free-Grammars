@@ -11,7 +11,8 @@
 
 namespace context_free {
 
-template <typename CTerminal, typename CStack> struct MeatBall
+template <typename CStack, typename CTerminal, typename CStackPtrBox>
+struct MeatBall
 {
 	const std::string human_name;
 
@@ -23,20 +24,22 @@ template <typename CTerminal, typename CStack> struct MeatBall
 
 	using TransitionFrom =
 	    std::pair<std::optional<CStack>, std::optional<CTerminal>>;
-	using TransitionTo = std::vector<
-	    std::pair<std::shared_ptr<StackCommand<CStack>>, MeatBall*>>;
+	using TransitionTo = std::vector<std::pair<
+	    std::shared_ptr<StackCommand<CStack, CStackPtrBox>>, MeatBall*>>;
 
 	std::map<TransitionFrom, TransitionTo> transitions{};
 
-	void addTransition(std::optional<CStack> stackC, CTerminal wordC,
-	                   std::shared_ptr<StackCommand<CStack>> command,
-	                   MeatBall& target)
+	void
+	addTransition(std::optional<CStack> stackC, std::optional<CTerminal> wordC,
+	              std::shared_ptr<StackCommand<CStack, CStackPtrBox>> command,
+	              MeatBall& target)
 	{
 		transitions[make_pair(stackC, wordC)].push_back(
-		    make_pair(command, target));
+		    make_pair(command, &target));
 	}
 
-	auto& next(Stack<CStack> const& stack, CTerminal charToRead) const
+	auto& next(Stack<CStack, CStackPtrBox> const& stack,
+	           CTerminal charToRead) const
 	{
 		static typename decltype(transitions)::mapped_type emptyTransition = {};
 		auto x = transitions.find(std::make_pair(stack.top(), charToRead));
@@ -47,7 +50,10 @@ template <typename CTerminal, typename CStack> struct MeatBall
 	static void printOrMissing(std::ostream& out,
 	                           std::optional<CStack> const& c)
 	{
-		out << (c.has_value() ? *c : CStack{'-'});
+		if (c.has_value())
+			c->print(out);
+		else
+			out << '-';
 	}
 
 	void printTransitions(std::ostream& out) const
