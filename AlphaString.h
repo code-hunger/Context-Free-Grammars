@@ -1,5 +1,6 @@
 #pragma once
 
+#include <sstream>
 #include "Alphabet.h"
 
 namespace context_free {
@@ -77,8 +78,11 @@ struct AlphaString : FunctorLike<C>, FunctorLike<CPtrBox>
 			auto in_alphabet = alphabet->findChar(c);
 
 			if (in_alphabet == nullptr) {
-				throw std::invalid_argument(
-				    "Attempted to parse a character not in alphabet.");
+				std::ostringstream error;
+				error << "Attempted to parse a character not in alphabet: \"";
+				c.print(error);
+				error << "\".";
+				throw std::invalid_argument(error.str());
 			}
 
 			new_string.push_back(in_alphabet);
