@@ -10,11 +10,15 @@ namespace context_free {
 
 template <typename C1, typename C2> struct CharUnion
 {
-	const std::variant<const C1*, const C2*> value;
+	const std::variant<C1, C2> value;
+
+	CharUnion(std::variant<C1, C2> const& arg) : value(arg) {}
+
+	CharUnion(C1 const& arg) : value(arg) {}
 
 	void print(std::ostream& out) const
 	{
-		auto CharPrinter = [&out](const auto* t) { t->print(out); };
+		auto CharPrinter = [&out](const auto t) { t.print(out); };
 
 		std::visit(CharPrinter, value);
 	};
@@ -27,12 +31,26 @@ template <typename C1, typename C2> struct CharUnion
 	operator bool() const
 	{
 		bool isEmpty = false;
-		std::visit(
-		    [&isEmpty](auto x) {
-			    if (!x) isEmpty = true;
-		    },
-		    value);
+		std::visit([&isEmpty](auto) { isEmpty = true; }, value);
 		return isEmpty;
+	}
+
+	template <typename... Dummy, typename U = C1>
+	std::enable_if_t<
+	    std::conjunction_v<std::is_pointer<C1>, std::is_pointer<C2>>, void>
+	customDelete()
+	{
+		std::visit([](auto arg) { delete arg; }, value);
+	}
+
+	template <typename... Dummy, typename U = C1>
+	std::enable_if_t<
+	    std::conjunction_v<std::is_pointer<C1>, std::is_pointer<C2>>,
+	    std::variant<std::remove_const_t<std::remove_pointer_t<C1>>,
+	                 std::remove_const_t<std::remove_pointer_t<C2>>>>
+	operator*() const
+	{
+		return {std::visit([](auto arg) { return *arg; }, value)};
 	}
 
 	template <typename P> auto visit(P predicate) const
@@ -55,7 +73,8 @@ inline bool operator<(CharUnion<C1, C2> const& a, CharUnion<C1, C2> const& b)
  */
 template <typename C> struct CharUnion<C, C>;
 
-template <typename CN, typename CT = CN, typename CPtrBox = CharUnion<CN, CT>>
+template <typename CN, typename CT = CN,
+          typename CPtrBox = CharUnion<const CN*, const CT*>>
 struct AlphabetTouple : public AlphabetLike<CN>,
                         public AlphabetLike<CT>,
                         public AlphabetLike<CharUnion<CN, CT>, CPtrBox>
@@ -155,13 +174,13 @@ struct AlphabetTouple<C, C, CPtrBox> : public AlphabetLike<C, CPtrBox>
 };
 
 template <typename CN, typename CT>
-struct AlphabetToupleDistinct : public AlphabetTouple<CN, CT, CharUnion<CN, CT>>
+struct AlphabetToupleDistinct : public AlphabetTouple<CN, CT>
 {
 	/*
 	 * A touple of 2 alphabets of different Char types is trivially distinct,
 	 * no need for any checks.
 	 */
-	using parent = AlphabetTouple<CN, CT, CharUnion<CN, CT>>;
+	using parent = AlphabetTouple<CN, CT, CharUnion<const CN*, const CT*>>;
 
 	AlphabetToupleDistinct(decltype(parent::N) N, decltype(parent::T) T)
 	    : parent(N, T)

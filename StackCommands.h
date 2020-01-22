@@ -2,6 +2,7 @@
 
 #include <ostream>
 
+#include "AlphaString.h"
 #include "Stack.h"
 
 namespace context_free {
@@ -61,9 +62,9 @@ template <typename C, typename CPtrBox> struct Push : StackCommand<C, CPtrBox>
 template <typename C, typename CPtrBox>
 struct Replace : StackCommand<C, CPtrBox>
 {
-	const C with;
+	const AlphaString<C, CPtrBox>& with;
 
-	Replace(C const& with) : with(with) {}
+	Replace(AlphaString<C, CPtrBox> const& with) : with(with) {}
 
 	void print(std::ostream& out) const override
 	{
@@ -78,15 +79,6 @@ struct Replace : StackCommand<C, CPtrBox>
 			throw std::runtime_error(
 			    "Tried to replace the top of an empty stack!");
 
-		CPtrBox inAlphabet = stack.alphabet->findChar(with);
-
-		if (!inAlphabet)
-			throw std::runtime_error("Got an error while executing "
-			                         "Replace() command on the stack. "
-			                         "Stack left unchanged.");
-
-		auto valueReplaced = stack.top();
-
 		try {
 			stack.pop();
 		} catch (...) {
@@ -95,20 +87,7 @@ struct Replace : StackCommand<C, CPtrBox>
 			    "push will be executed."));
 		}
 
-		try {
-			stack.push(with);
-		} catch (...) {
-			try {
-				stack.push(*valueReplaced);
-			} catch (...) {
-				std::throw_with_nested(std::runtime_error(
-				    "push() operation during Replace execution failed. "
-				    "Restoring previous value failed, too :("));
-			}
-			std::throw_with_nested(
-			    std::runtime_error("push() operation during Replace execution "
-			                       "failed. Previous value restored."));
-		}
+		with.for_each([&stack](CPtrBox c) { stack.push(*c); });
 	}
 
 	~Replace() {}

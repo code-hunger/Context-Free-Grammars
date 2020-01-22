@@ -7,7 +7,7 @@ namespace context_free {
 using std::shared_ptr;
 
 template <typename C, typename CPtrBox = const C*>
-struct AlphaString : FunctorLike<C>, FunctorLike<CPtrBox>
+struct AlphaString : FunctorLike<C> //, FunctorLike<CPtrBox>
 {
 	const shared_ptr<AlphabetLike<C, CPtrBox>> alphabet;
 
@@ -32,26 +32,26 @@ struct AlphaString : FunctorLike<C>, FunctorLike<CPtrBox>
 		}
 	}
 
-	void for_each(std::function<void(CPtrBox const&)> const& p) const override
-	{
-		std::for_each(string.begin(), string.end(), p);
-	}
+	//void for_each(std::function<void(CPtrBox const&)> const& p) const override
+	//{
+		//std::for_each(string.begin(), string.end(), p);
+	//}
 
-	bool all_of(std::function<bool(CPtrBox const&)> const& p) const override
-	{
-		return std::all_of(string.begin(), string.end(), p);
-	}
+	//bool all_of(std::function<bool(CPtrBox const&)> const& p) const override
+	//{
+		//return std::all_of(string.begin(), string.end(), p);
+	//}
 
 	void for_each(std::function<void(const C&)> const& p) const override
 	{
-		for (const C* c : string) {
+		for (CPtrBox c : string) {
 			p(*c);
 		}
 	}
 
 	bool all_of(std::function<bool(const C&)> const& p) const override
 	{
-		for (const C* c : string) {
+		for (CPtrBox c : string) {
 			if (!p(*c)) {
 				return false;
 			}
@@ -70,17 +70,16 @@ struct AlphaString : FunctorLike<C>, FunctorLike<CPtrBox>
 	            std::string const& str)
 	{
 		if (str.size() <= 1 && str[0] == '@')
-			return {Alphabet<LetterChar>::constructEmpty(), {}};
+			return {Alphabet<C, CPtrBox>::constructEmpty(), {}};
 
 		std::vector<CPtrBox> new_string;
 
-		for (C const& c : str) {
-			auto in_alphabet = alphabet->findChar(c);
+		for (char c : str) {
+			auto in_alphabet = alphabet->findChar(C{c});
 
 			if (in_alphabet == nullptr) {
 				std::ostringstream error;
-				error << "Attempted to parse a character not in alphabet: \"";
-				c.print(error);
+				error << "Attempted to parse a character not in alphabet: \"" << c;
 				error << "\".";
 				throw std::invalid_argument(error.str());
 			}

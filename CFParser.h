@@ -57,10 +57,10 @@ auto parseRules(istream& input, AlphabetsPtr<CN, CT> alphabets)
 	while (input && !streamFinished(input)) {
 		try {
 			rules.push_back(parseRule(input, alphabets));
-		} catch (std::runtime_error const& e) {
+		} catch (std::exception const& e) {
 			std::cerr << "Failed to parse a rule. Error: " << std::endl
 			          << e.what() << std::endl
-			          << "Won't read for more rules." << std::endl;
+			          << "Won't read for more rules.\n" << std::endl;
 			break;
 		}
 	}

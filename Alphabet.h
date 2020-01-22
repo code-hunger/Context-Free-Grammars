@@ -77,6 +77,32 @@ struct AlphabetLike : FunctorLike<C>
 	virtual ~AlphabetLike() {}
 };
 
+template <typename C, typename CPtrBox>
+struct SingletonAlphabet : AlphabetLike<C, CPtrBox>
+{
+	const C c;
+	SingletonAlphabet(const C& c) : c(c) {}
+
+	CPtrBox findChar(C const& c) const override
+	{
+		if (c == this->c) return &this->c;
+
+		return CPtrBox{nullptr};
+	};
+
+	void for_each(std::function<void(C const&)> const& predicate) const override
+	{
+		predicate(c);
+	}
+
+	bool all_of(std::function<bool(C const&)> const& predicate) const override
+	{
+		return predicate(c);
+	}
+
+	virtual ~SingletonAlphabet() {}
+};
+
 template <typename C>
 std::vector<unique_ptr<C>> stringToPtrVec(std::string const& string)
 {
@@ -88,16 +114,21 @@ std::vector<unique_ptr<C>> stringToPtrVec(std::string const& string)
 	return vector;
 }
 
-template <typename C> class Alphabet : public AlphabetLike<C, const C*>
+template <typename Ptr> void releaseDynamicChar(Ptr x) { x.customDelete(); }
+
+template <typename C> void releaseDynamicChar(const C* c) { delete c; }
+
+template <typename C, typename CPtrBox = const C*>
+class Alphabet : public AlphabetLike<C, CPtrBox>
 {
 	/*
 	 * An immutable object representing a finite alphabet
 	 */
-	using C_ptr_vec = std::vector<const C*>;
+	using C_ptr_vec = std::vector<CPtrBox>;
 
 	const C_ptr_vec chars{};
 
-	static std::shared_ptr<Alphabet<C>> emptyAlphabet;
+	static std::shared_ptr<Alphabet<C, CPtrBox>> emptyAlphabet;
 
 	static C_ptr_vec rawifyChars(std::vector<unique_ptr<C>>&& chars)
 	{
@@ -105,7 +136,7 @@ template <typename C> class Alphabet : public AlphabetLike<C, const C*>
 		rawified.reserve(chars.size());
 		for (unique_ptr<C>& c : chars) {
 			if (std::find_if(std::begin(rawified), std::end(rawified),
-			                 [& c = *c](const C* b) { return c == *b; }) ==
+			                 [& c = *c](CPtrBox b) { return c == *b; }) ==
 			    std::end(rawified))
 				rawified.push_back(c.release());
 		}
@@ -135,17 +166,18 @@ public:
 	static auto constructEmpty()
 	{
 		if (!emptyAlphabet)
-			emptyAlphabet = std::make_shared<Alphabet>(Alphabet<C>{DummyEmpty});
+			emptyAlphabet =
+			    std::make_shared<Alphabet>(Alphabet<C, CPtrBox>{DummyEmpty});
 
 		return emptyAlphabet;
 	}
 
 	size_t size() const { return chars.size(); }
 
-	const C* findChar(C const& c) const override
+	CPtrBox findChar(C const& c) const override
 	{
 		auto what_found =
-		    std::find_if(begin(), end(), [c](const C* x) { return *x == c; });
+		    std::find_if(begin(), end(), [c](CPtrBox x) { return *x == c; });
 
 		return what_found == end() ? nullptr : *what_found;
 	}
@@ -160,26 +192,31 @@ public:
 
 	bool all_of(std::function<bool(C const&)> const& predicate) const override
 	{
-		for (const C* c : *this)
+		for (CPtrBox c : *this) {
+			decltype(c)::erthought2;
+			std::remove_reference_t<typename decltype(*c)::type>::erthought2;
+			CPtrBox::erthought2;
 			if (!predicate(*c)) return false;
+		}
 		return true;
 	}
 
 	void for_each(std::function<void(C const&)> const& predicate) const override
 	{
-		for (const C* c : *this)
+		for (CPtrBox c : *this)
 			predicate(*c);
 	}
 
 	~Alphabet()
 	{
-		for (const C* c : *this) {
-			delete c;
+		for (CPtrBox c : *this) {
+			releaseDynamicChar(c);
 		}
 	}
 };
 
-template <typename C> std::shared_ptr<Alphabet<C>> Alphabet<C>::emptyAlphabet{};
+template <typename C, typename CPtrBox>
+std::shared_ptr<Alphabet<C, CPtrBox>> Alphabet<C, CPtrBox>::emptyAlphabet{};
 
 template <typename C, typename CPtrBox>
 std::ostream& operator<<(std::ostream& out,
