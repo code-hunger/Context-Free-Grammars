@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <sstream>
 #include <variant>
@@ -35,22 +36,33 @@ template <typename C1, typename C2> struct CharUnion
 		return isEmpty;
 	}
 
-	template <typename... Dummy, typename U = C1>
-	std::enable_if_t<
-	    std::conjunction_v<std::is_pointer<C1>, std::is_pointer<C2>>, void>
+	template <typename... Dummy> void customDelete()
+	{
+		throw std::runtime_error(
+		    "Custom delete unsupported on this instantiation.");
+	}
+
+	template <typename... Dummy, typename U = C1, typename F = C2>
+	std::enable_if_t<std::conjunction_v<std::is_pointer<U>, std::is_pointer<F>>,
+	                 void>
 	customDelete()
 	{
 		std::visit([](auto arg) { delete arg; }, value);
 	}
 
-	template <typename... Dummy, typename U = C1>
-	std::enable_if_t<
-	    std::conjunction_v<std::is_pointer<C1>, std::is_pointer<C2>>,
-	    std::variant<std::remove_const_t<std::remove_pointer_t<C1>>,
-	                 std::remove_const_t<std::remove_pointer_t<C2>>>>
+	template <typename... Dummy, typename U = C1, typename F = C2>
+	std::enable_if_t<std::conjunction_v<std::is_pointer<U>, std::is_pointer<F>>,
+	                 CharUnion<std::remove_const_t<std::remove_pointer_t<U>>,
+	                           std::remove_const_t<std::remove_pointer_t<F>>>>
 	operator*() const
 	{
-		return {std::visit([](auto arg) { return *arg; }, value)};
+		return std::visit(
+		    [](auto arg) {
+			    return std::variant<
+			        std::remove_const_t<std::remove_pointer_t<U>>,
+			        std::remove_const_t<std::remove_pointer_t<F>>>{*arg};
+		    },
+		    value);
 	}
 
 	template <typename P> auto visit(P predicate) const
@@ -113,10 +125,10 @@ struct AlphabetTouple : public AlphabetLike<CN>,
 	    const override
 	{
 		auto forN = [&predicate](CN const& arg) {
-			return predicate(char_type{&arg});
+			return predicate(char_type{arg});
 		};
 		auto forT = [&predicate](CT const& arg) {
-			return predicate(char_type{&arg});
+			return predicate(char_type{arg});
 		};
 		return N->all_of(forN) && T->all_of(forT);
 	}
@@ -125,10 +137,10 @@ struct AlphabetTouple : public AlphabetLike<CN>,
 	                  predicate) const override
 	{
 		auto forN = [&predicate](CN const& arg) {
-			return predicate(char_type{&arg});
+			return predicate(char_type{arg});
 		};
 		auto forT = [&predicate](CT const& arg) {
-			return predicate(char_type{&arg});
+			return predicate(char_type{arg});
 		};
 		N->for_each(forN);
 		T->for_each(forT);
@@ -137,10 +149,7 @@ struct AlphabetTouple : public AlphabetLike<CN>,
 	CPtrBox findChar(CharUnion<CN, CT> const& c) const override
 	{
 		return c.visit([this](auto c) -> CPtrBox {
-			if (c == nullptr) {
-				throw std::runtime_error("The given char union is empty!!");
-			}
-			return CPtrBox{this->findChar(*c)};
+			return CPtrBox{this->findChar(c)};
 		});
 	}
 

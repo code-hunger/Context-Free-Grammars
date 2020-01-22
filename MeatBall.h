@@ -42,12 +42,18 @@ struct MeatBall
 	           CTerminal charToRead) const
 	{
 		static typename decltype(transitions)::mapped_type emptyTransition = {};
-		auto x = transitions.find(std::make_pair(stack.top(), charToRead));
+
+		auto search_for = std::make_pair(
+		    std::make_optional<CStack>(
+		        **stack.top()), // top() returns CPtrBox, not just C
+		    std::make_optional<CTerminal>(charToRead));
+
+		auto x = transitions.find(TransitionFrom{search_for});
 
 		return x != transitions.end() ? x->second : emptyTransition;
 	}
 
-	template<typename C>
+	template <typename C>
 	static void printOr(std::ostream& out, std::optional<C> const& c,
 	                    std::string if_empty)
 	{

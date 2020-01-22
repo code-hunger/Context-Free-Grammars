@@ -26,21 +26,20 @@ struct StackBottomChar : Char
 
 bool operator<(StackBottomChar const&, StackBottomChar const&) { return false; }
 
+const StackBottomChar bottom;
+
 template <typename C>
-inline AlphabetToupleDistinct<C, StackBottomChar> 
-extendAlphabet(const std::shared_ptr<AlphabetLike<C>> alphabet);
-/*{
-	StackBottomChar bottom;
+inline AlphabetToupleDistinct<C, StackBottomChar>
+extendAlphabet(const std::shared_ptr<AlphabetLike<C>> alphabet)
+{
 
-	std::shared_ptr<AlphabetLike<StackBottomChar>> singletonAlphabet =
-		;
-
-	AlphabetToupleDistinct<C, StackBottomChar> stackAlphabet{alphabet,
-															 std::make_shared<
-			SingletonAlphabet<StackBottomChar, const StackBottomChar*>>(
-			SingletonAlphabet<StackBottomChar, const StackBottomChar*>{bottom})};
+	AlphabetToupleDistinct<C, StackBottomChar> stackAlphabet{
+	    alphabet,
+	    std::make_shared<
+	        SingletonAlphabet<StackBottomChar, const StackBottomChar*>>(
+	        bottom)};
 	return stackAlphabet;
-}*/
+}
 
 template <typename CN, typename CT>
 auto grammarToAutomata(CFGrammarTouple<CT, CN> const& grammar)
@@ -57,7 +56,6 @@ auto grammarToAutomata(CFGrammarTouple<CT, CN> const& grammar)
 
 	auto bottomPtr = stackAlphabet.T->findChar(StackBottomChar{'#'});
 	auto& bottom = *bottomPtr;
-	StackBottomChar{'#'};
 
 	std::forward_list<MeatBall> meatBalls;
 	meatBalls.emplace_front("start");
@@ -87,15 +85,9 @@ auto grammarToAutomata(CFGrammarTouple<CT, CN> const& grammar)
 			// c.visit([&properlyTypedCopy](auto x) {
 			// properlyTypedCopy.push_back(x->value); });
 		});
-		// std::remove_reference_t<decltype(rule.to)>::rule_to;
 
-		static_assert(
-		    std::is_base_of_v<
-		        AlphabetLike<CharUnion<LetterChar, StackBottomChar>,
-		                     const CharUnion<LetterChar, StackBottomChar>*>,
-		        AlphabetToupleDistinct<
-		            CharUnion<LetterChar, StackBottomChar>,
-		            CharUnion<LetterChar, StackBottomChar>*>>);
+		//CStack:: dada;
+		//decltype(rule.to)::dada;
 
 		auto realReplacor = AlphaString<CStack, CStackPtrBox>::parseString(
 		    stackAlphabetPtr, properlyTypedCopy);

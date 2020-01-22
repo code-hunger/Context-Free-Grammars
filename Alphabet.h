@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <memory>
 #include <sstream>
+#include <variant>
 #include <vector>
 
 namespace context_free {
@@ -114,7 +115,11 @@ std::vector<unique_ptr<C>> stringToPtrVec(std::string const& string)
 	return vector;
 }
 
-template <typename Ptr> void releaseDynamicChar(Ptr x) { x.customDelete(); }
+template <typename Ptr> void releaseDynamicChar(Ptr x)
+{
+	std::visit([](auto arg) { delete arg; }, x.value);
+	// x.customDelete();
+}
 
 template <typename C> void releaseDynamicChar(const C* c) { delete c; }
 
@@ -192,12 +197,9 @@ public:
 
 	bool all_of(std::function<bool(C const&)> const& predicate) const override
 	{
-		for (CPtrBox c : *this) {
-			decltype(c)::erthought2;
-			std::remove_reference_t<typename decltype(*c)::type>::erthought2;
-			CPtrBox::erthought2;
-			if (!predicate(*c)) return false;
-		}
+		for (CPtrBox c : *this)
+			if (!predicate(C{*c})) return false;
+		
 		return true;
 	}
 

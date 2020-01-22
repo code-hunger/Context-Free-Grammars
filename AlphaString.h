@@ -1,13 +1,13 @@
 #pragma once
 
-#include <sstream>
 #include "Alphabet.h"
+#include <sstream>
 
 namespace context_free {
 using std::shared_ptr;
 
 template <typename C, typename CPtrBox = const C*>
-struct AlphaString : FunctorLike<C> //, FunctorLike<CPtrBox>
+struct AlphaString : FunctorLike<C>, FunctorLike<CPtrBox>
 {
 	const shared_ptr<AlphabetLike<C, CPtrBox>> alphabet;
 
@@ -28,19 +28,21 @@ struct AlphaString : FunctorLike<C> //, FunctorLike<CPtrBox>
 		}
 
 		for (auto c : string) {
-			c->print(out);
+			(*c).print(out); // 'c' might be a non-pointer type (e.g. CharUnion)
+			                 // that implements operator*. @TODO check if
+			                 // operator->() can be overloaded.
 		}
 	}
 
-	//void for_each(std::function<void(CPtrBox const&)> const& p) const override
-	//{
-		//std::for_each(string.begin(), string.end(), p);
-	//}
+	void for_each(std::function<void(CPtrBox const&)> const& p) const override
+	{
+		std::for_each(string.begin(), string.end(), p);
+	}
 
-	//bool all_of(std::function<bool(CPtrBox const&)> const& p) const override
-	//{
-		//return std::all_of(string.begin(), string.end(), p);
-	//}
+	bool all_of(std::function<bool(CPtrBox const&)> const& p) const override
+	{
+		return std::all_of(string.begin(), string.end(), p);
+	}
 
 	void for_each(std::function<void(const C&)> const& p) const override
 	{
@@ -79,7 +81,8 @@ struct AlphaString : FunctorLike<C> //, FunctorLike<CPtrBox>
 
 			if (in_alphabet == nullptr) {
 				std::ostringstream error;
-				error << "Attempted to parse a character not in alphabet: \"" << c;
+				error << "Attempted to parse a character not in alphabet: \""
+				      << c;
 				error << "\".";
 				throw std::invalid_argument(error.str());
 			}

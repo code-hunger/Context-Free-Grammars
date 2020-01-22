@@ -37,8 +37,7 @@ auto createMeatBalls()
 
 int main()
 {
-	std::string terminals = "abc",
-	            variables = "SABC";
+	std::string terminals = "abcd", variables = "SABCD";
 
 	CFGrammarTouple grammar = parseGrammar(
 	    std::cin,
@@ -54,6 +53,12 @@ int main()
 		std::cout << "The grammar has a rule from " << rule.from << " to "
 		          << rule.to << std::endl;
 	}
+
+	//SingletonAlphabet<StackBottomChar, const StackBottomChar*>{ StackBottomChar{}};
+
+	//std::make_shared<
+		//SingletonAlphabet<StackBottomChar, const StackBottomChar*>>(
+		//);
 
 	auto automata = grammarToAutomata(grammar);
 
