@@ -62,14 +62,14 @@ template <typename C, typename CPtrBox> struct Push : StackCommand<C, CPtrBox>
 template <typename C, typename CPtrBox>
 struct Replace : StackCommand<C, CPtrBox>
 {
-	const AlphaString<C, CPtrBox>& with;
+	const std::shared_ptr<AlphaString<C, CPtrBox>> with;
 
-	Replace(AlphaString<C, CPtrBox> const& with) : with(with) {}
+	Replace(std::shared_ptr<AlphaString<C, CPtrBox>> with) : with(with) {}
 
 	void print(std::ostream& out) const override
 	{
 		out << "Replace<";
-		with.print(out);
+		with->print(out);
 		out << ">";
 	}
 
@@ -87,7 +87,7 @@ struct Replace : StackCommand<C, CPtrBox>
 			    "push will be executed."));
 		}
 
-		with.for_each([&stack](CPtrBox c) { stack.push(*c); });
+		with->for_each([&stack](CPtrBox c) { stack.push(*c); });
 	}
 
 	~Replace() {}

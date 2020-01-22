@@ -54,12 +54,6 @@ int main()
 		          << rule.to << std::endl;
 	}
 
-	//SingletonAlphabet<StackBottomChar, const StackBottomChar*>{ StackBottomChar{}};
-
-	//std::make_shared<
-		//SingletonAlphabet<StackBottomChar, const StackBottomChar*>>(
-		//);
-
 	auto automata = grammarToAutomata(grammar);
 
 	std::cout << "Start: " << automata.start.human_name << std::endl;

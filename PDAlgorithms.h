@@ -72,29 +72,21 @@ auto grammarToAutomata(CFGrammarTouple<CT, CN> const& grammar)
 	    std::make_shared<Push<CStack, CStackPtrBox>>(CStack{*grammar.start}),
 	    wild);
 
-	// shared_ptr<        Push<CharUnion<LetterChar, StackBottomChar>,
-	// CharUnion<LetterChar, StackBottomChar> >> a1;
-	// shared_ptr<StackCommand<CharUnion<LetterChar, StackBottomChar>,
-	// CharUnion<const LetterChar *, const StackBottomChar *>>> a2;
-
 	for (auto const& rule : grammar.rules) {
 		auto replacor = rule.to;
 		std::string properlyTypedCopy;
 		rule.to.for_each([&properlyTypedCopy](LetterChar const& c) {
 			properlyTypedCopy.push_back(c.value);
-			// c.visit([&properlyTypedCopy](auto x) {
-			// properlyTypedCopy.push_back(x->value); });
 		});
-
-		//CStack:: dada;
-		//decltype(rule.to)::dada;
 
 		auto realReplacor = AlphaString<CStack, CStackPtrBox>::parseString(
 		    stackAlphabetPtr, properlyTypedCopy);
 
 		wild.addTransition(
-		    CStack{*stackAlphabet.findChar(rule.from)}, std::nullopt,
-		    std::make_shared<Replace<CStack, CStackPtrBox>>(realReplacor),
+		    CStack{rule.from}, std::nullopt,
+		    std::make_shared<Replace<CStack, CStackPtrBox>>(
+		        std::make_shared<AlphaString<CStack, CStackPtrBox>>(
+		            realReplacor)),
 		    wild);
 	}
 

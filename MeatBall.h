@@ -27,6 +27,8 @@ struct MeatBall
 	using TransitionTo = std::vector<std::pair<
 	    std::shared_ptr<StackCommand<CStack, CStackPtrBox>>, MeatBall*>>;
 
+	// The imperative logic for constructing MeatBalls requires me to make it
+	// non-const. I don't think it'd be beautiful otherwise.
 	std::map<TransitionFrom, TransitionTo> transitions{};
 
 	void
