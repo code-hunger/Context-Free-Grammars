@@ -40,19 +40,17 @@ struct MeatBall
 		    make_pair(command, &target));
 	}
 
-	auto& next(Stack<CStack, CStackPtrBox> const& stack,
-	           CTerminal charToRead) const
+	auto next(Stack<CStack, CStackPtrBox> const& stack,
+	          std::optional<CTerminal> charToRead) const
 	{
 		static typename decltype(transitions)::mapped_type emptyTransition = {};
 
-		auto search_for = std::make_pair(
-		    std::make_optional<CStack>(
-		        **stack.top()), // top() returns CPtrBox, not just C
-		    std::make_optional<CTerminal>(charToRead));
+		auto search = std::make_pair(stack.top(), charToRead);
 
-		auto x = transitions.find(TransitionFrom{search_for});
+		auto possibleMoves = transitions.find(TransitionFrom{search});
 
-		return x != transitions.end() ? x->second : emptyTransition;
+		return possibleMoves == transitions.end() ? emptyTransition
+		                                          : possibleMoves->second;
 	}
 
 	template <typename C>

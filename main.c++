@@ -37,7 +37,7 @@ auto createMeatBalls()
 
 int main()
 {
-	std::string terminals = "abcd", variables = "SABCD";
+	const std::string terminals = "abcde", variables = "SABCD";
 
 	CFGrammarTouple grammar = parseGrammar(
 	    std::cin,
@@ -54,7 +54,7 @@ int main()
 		          << rule.to << std::endl;
 	}
 
-	auto automata = grammarToAutomata(grammar);
+	const auto automata = grammarToAutomata(grammar);
 
 	std::cout << "Start: " << automata.start.human_name << std::endl;
 
@@ -63,24 +63,39 @@ int main()
 		s.printTransitions(std::cout);
 	}
 
+	std::cout << "I'll try to read words now!" << std::endl;
+
+	int n;
+	if(!(std::cin >> n)) {
+		throw std::runtime_error("fack");
+	}
+
 	while (!streamFinished(std::cin)) {
 		auto word = parseString(std::cin, alphabets->T);
-		auto reader = automata.createReader(word);
 
-		int n = 0;
+		std::cout << "From input I got '";
+		word.print(std::cout);
+		std::cout << "'" << std::endl;
+
+		auto reader = automata.createReader(
+		    word, decltype(automata.stackAlphabet)::element_type::char_type{
+		              context_free::bottom});
+
 		bool found = false;
-		if (!(std::cin >> n)) break;
+
 		for (int i = 0; i < n; ++i) {
+			std::cout << "Advancing…" << i << '\r';
+
 			const auto result = reader.advance();
 
-			if (result) {
-				found = true;
-				std::cout << "WORD \"" << word << "\" RECOGNIZED!" << std::endl;
+			if (result.finished) {
+				found = result.acceptingState.has_value();
+				break;
 			}
 		}
 
-		if (!found)
-			std::cout << "Word \"" << word << "\" not recognized." << std::endl;
+		std::cout << "\n\"" << word << "\" : " << std::boolalpha << found
+		          << std::endl;
 	}
 
 	std::cout << "Bye!" << std::endl;

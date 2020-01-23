@@ -3,17 +3,21 @@
 #include "AlphaString.h"
 #include "MeatBall.h"
 #include "Stack.h"
+#include <iostream>
 #include <list>
 
 namespace context_free {
 
-template <typename CStack, typename CTerminal, typename CStackPtrBox> class ReadState
+template <typename CStack, typename CTerminal, typename CStackPtrBox>
+class ReadState
 {
 	using Word = AlphaString<CTerminal>;
 	using WordPtr = typename Word::const_iterator;
 	using MeatBallT = const MeatBall<CStack, CTerminal, CStackPtrBox>;
 
-	using StateHead = std::tuple<MeatBallT*, Stack<CStack, CStackPtrBox>, WordPtr>;
+	using StateHead =
+	    std::tuple<MeatBallT*, std::unique_ptr<Stack<CStack, CStackPtrBox>>,
+	               WordPtr>;
 
 	std::list<StateHead> heads{};
 
@@ -21,22 +25,37 @@ template <typename CStack, typename CTerminal, typename CStackPtrBox> class Read
 
 	bool advance(StateHead const& head)
 	{
-		auto& [meatBall, stack, nextChar] = head;
+		auto& [meatBall, stack, nextCharIt] = head;
 
-		if (nextChar == word.string.end()) { // No more chars to read.
+		if (stack->empty()) { // No more chars to read.
 			// Hope we found it
-			return stack.empty();
+			return nextCharIt == word.string.end();
 		}
 
-		auto const& transitions = meatBall->next(stack, **nextChar);
+		const auto nextChar = nextCharIt == word.string.end()
+		                          ? std::nullopt
+		                          : std::make_optional(**nextCharIt);
 
-		for (auto const& [cmd, targetMeatBall] : transitions) {
-			auto newStack{stack};
-			cmd->execute(newStack);
+		auto const& eating = meatBall->next(*stack, nextChar);
+
+		for (auto const& [cmd, targetMeatBall] : eating) {
+			auto newStack = stack->clone();
+			cmd->execute(*newStack);
 
 			heads.push_front(
-			    std::make_tuple(targetMeatBall, newStack, nextChar + 1));
+			    std::make_tuple(targetMeatBall, std::move(newStack),
+			                    nextChar ? std::next(nextCharIt) : nextCharIt));
 		}
+
+		if (nextChar)
+			for (auto const& [cmd, targetMeatBall] :
+			     meatBall->next(*stack, std::nullopt)) {
+				auto newStack = stack->clone();
+				cmd->execute(*newStack);
+
+				heads.push_front(std::make_tuple(
+				    targetMeatBall, std::move(newStack), nextCharIt));
+			}
 
 		return false;
 	}
@@ -45,18 +64,24 @@ public:
 	const Word word;
 
 	ReadState(Word const& word, MeatBallT const& meatBall,
-	          Stack<CStack, CStackPtrBox> const& stack)
+	          std::unique_ptr<Stack<CStack, CStackPtrBox>> stack)
 	    : word(word)
 	{
-		StateHead init(&meatBall, stack, word.string.begin());
-		heads.push_back(init);
+		heads.push_back(
+		    {&meatBall, std::move(stack), this->word.string.begin()});
 	}
 
-	std::optional<StateHead> advance()
+	struct AdvanceResult
 	{
-		for (HeadsIt it = heads.begin(); it != heads.end(); ) {
+		const bool finished;
+		const std::optional<MeatBallT*> acceptingState = nullptr;
+	};
+
+	AdvanceResult advance()
+	{
+		for (HeadsIt it = heads.begin(); it != heads.end();) {
 			if (advance(*it)) {
-				return *it;
+				return {true, {std::get<0>(*it)}};
 			}
 
 			auto old = it;
@@ -64,8 +89,9 @@ public:
 			heads.erase(old);
 		}
 
-		return std::nullopt;
+		if (heads.empty()) return {true, std::nullopt};
+
+		return {false, std::nullopt};
 	}
 };
-
 } // namespace context_free

@@ -87,7 +87,8 @@ struct Replace : StackCommand<C, CPtrBox>
 			    "push will be executed."));
 		}
 
-		with->for_each([&stack](CPtrBox c) { stack.push(*c); });
+		std::for_each(with->string.rbegin(), with->string.rend(),
+		              [&stack](CPtrBox c) { stack.push(*c); });
 	}
 
 	~Replace() {}
