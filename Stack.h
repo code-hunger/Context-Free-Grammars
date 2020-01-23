@@ -14,21 +14,34 @@ template <typename C, typename CPtrBox> struct Stack
 private:
 	std::stack<CPtrBox> stack{};
 
+protected:
+	/* A Stack should be copied using clone() to ensure derived classes are
+	 * properly handled because implicit calls of the copy ctor may lead to
+	 * confusion (as it happened already to me) */
+	Stack(Stack const&) = default;
+
 public:
 	const std::shared_ptr<AlphabetLike<C, CPtrBox>> alphabet;
 
 	Stack(decltype(alphabet) alphabet) : alphabet{alphabet} {}
 
-	std::optional<CPtrBox> top() const
+	Stack(Stack &&) = default;
+
+	virtual unique_ptr<Stack> clone() const
+	{
+		return std::make_unique<Stack>(Stack{*this});
+	}
+
+	virtual std::optional<C> top() const
 	{
 		if (stack.empty()) return {};
 
-		return stack.top();
+		return *stack.top();
 	}
 
-	bool empty() const { return stack.empty(); }
+	virtual bool empty() const { return stack.empty(); }
 
-	void push(C const& c)
+	virtual void push(C const& c)
 	{
 		CPtrBox inAlphabet = alphabet->findChar(c);
 		if (!inAlphabet)
@@ -38,12 +51,14 @@ public:
 		stack.push(inAlphabet);
 	}
 
-	void pop()
+	virtual void pop()
 	{
 		if (stack.empty())
 			throw std::runtime_error("Cannot call Pop() on an empty stack");
 		stack.pop();
 	}
+
+	virtual ~Stack() {}
 };
 
 } // namespace context_free

@@ -13,6 +13,12 @@ private:
 	bool hasBottom = true;
 	using parent = Stack<C, CPtrBox>;
 
+protected:
+	/* A Stack should be copied using clone() to ensure derived classes are
+	 * properly handled because implicit calls of the copy ctor may lead to
+	 * confusion (as it happened already to me) */
+	BottomedStack(BottomedStack const&) = default;
+
 public:
 	const std::optional<C> bottom;
 
@@ -21,16 +27,23 @@ public:
 	{
 	}
 
-	std::optional<C> top() const
+	BottomedStack(BottomedStack&&) = default;
+
+	std::unique_ptr<parent> clone() const override
+	{
+		return std::make_unique<BottomedStack>(BottomedStack{*this});
+	}
+
+	std::optional<C> top() const override
 	{
 		return parent::empty() ? bottom : parent::top();
 	}
 
-	bool empty() const { return parent::empty() && !hasBottom; }
+	bool empty() const override { return parent::empty() && !hasBottom; }
 
 	bool reachedBottom() const { return parent::empty() && hasBottom; }
 
-	void push(C const& c)
+	void push(C const& c) override
 	{
 		if (bottom.has_value() && *bottom == c)
 			throw std::runtime_error(
@@ -47,7 +60,7 @@ public:
 		parent::push(c);
 	}
 
-	void pop()
+	void pop() override
 	{
 		if (!parent::empty())
 			parent::pop();
