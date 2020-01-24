@@ -9,13 +9,14 @@ namespace context_free {
 
 using std::istream;
 
-AlphaString<LetterChar>
-parseString(istream& in, std::shared_ptr<AlphabetLike<LetterChar>> alphabet)
+template<typename C = LetterChar>
+AlphaString<C>
+parseString(istream& in, std::shared_ptr<AlphabetLike<C>> alphabet)
 {
 	std::string string;
 	in >> string;
 
-	return AlphaString<LetterChar>::parseString(alphabet, string);
+	return AlphaString<C>::parseString(alphabet, string);
 }
 
 template <typename C>
@@ -36,11 +37,11 @@ const C& parseLetterChar(istream& input, AlphabetLike<C> const& alphabet)
 template <typename CN, typename CT = CN>
 using AlphabetsPtr = std::shared_ptr<AlphabetToupleDistinct<CN, CT>>;
 
-template <typename CN, typename CT>
-Rule<CN, CT> parseRule(istream& input, AlphabetsPtr<CN, CT> alphabets)
+template <typename CN, typename CT, typename CPtrBox>
+Rule<CN, CT, CPtrBox> parseRule(istream& input, AlphabetsPtr<CN, CT> alphabets)
 {
 	return {parseLetterChar(input, *alphabets->N),
-	        parseString(input, alphabets)};
+	        parseString<decltype(alphabets)::element_type::char_type>(input, alphabets)};
 }
 
 bool streamFinished(istream& input)
@@ -49,14 +50,14 @@ bool streamFinished(istream& input)
 	return input.eof();
 }
 
-template <typename CN, typename CT>
+template <typename CN, typename CT, typename CPtrBox>
 auto parseRules(istream& input, AlphabetsPtr<CN, CT> alphabets)
 {
-	std::vector<Rule<CN, CT>> rules;
+	std::vector<Rule<CN, CT, CPtrBox>> rules;
 
 	while (input && !streamFinished(input)) {
 		try {
-			rules.push_back(parseRule(input, alphabets));
+			rules.push_back(parseRule<CN, CT, CPtrBox>(input, alphabets));
 		} catch (std::exception const& e) {
 			std::cerr << "Failed to parse a rule. Error: " << std::endl
 			          << e.what() << std::endl
@@ -68,12 +69,12 @@ auto parseRules(istream& input, AlphabetsPtr<CN, CT> alphabets)
 	return rules;
 }
 
-template <typename CN, typename CT>
-CFGrammarTouple<CN, CT> parseGrammar(istream& input,
+template <typename CN, typename CT, typename CPtrBox>
+CFGrammarTouple<CN, CT, CPtrBox> parseGrammar(istream& input,
                                      AlphabetsPtr<CN, CT> alphabets)
 {
 	return {alphabets, parseLetterChar(input, *alphabets->N),
-	        parseRules(input, alphabets)};
+	        parseRules<CN, CT, CPtrBox>(input, alphabets)};
 }
 
 } // namespace context_free

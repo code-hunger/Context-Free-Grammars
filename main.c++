@@ -8,9 +8,9 @@
 
 using namespace context_free;
 
-auto toSharedAlphabet(std::string const& string)
+template <typename C> auto toSharedAlphabet(std::string const& string)
 {
-	return std::make_shared<Alphabet<LetterChar>>(string);
+	return std::make_shared<Alphabet<C>>(string);
 }
 
 auto createMeatBalls()
@@ -39,10 +39,11 @@ int main()
 {
 	const std::string terminals = "abcde", variables = "SABCD";
 
-	CFGrammarTouple grammar = parseGrammar(
+	CFGrammarTouple grammar = parseGrammar<BigLetterChar, LetterChar, CharUnion<const BigLetterChar*, const LetterChar*>>(
 	    std::cin,
-	    std::make_shared<AlphabetToupleDistinct<LetterChar, LetterChar>>(
-	        toSharedAlphabet(variables), toSharedAlphabet(terminals)));
+	    std::make_shared<AlphabetToupleDistinct<BigLetterChar, LetterChar>>(
+	        toSharedAlphabet<BigLetterChar>(variables),
+	        toSharedAlphabet<LetterChar>(terminals)));
 
 	auto& alphabets = grammar.alphabets;
 
@@ -50,8 +51,11 @@ int main()
 	std::cout << "Termianls: " << *alphabets->T << std::endl;
 
 	for (auto& rule : grammar.rules) {
-		std::cout << "The grammar has a rule from " << rule.from << " to "
-		          << rule.to << std::endl;
+		std::cout << "The grammar has a rule from " ;
+		rule.from.print(std::cout);
+		std::cout << " to ";
+		rule.to.print(std::cout);
+		std::cout << std::endl;
 	}
 
 	const auto automata = grammarToAutomata(grammar);
@@ -66,7 +70,7 @@ int main()
 	std::cout << "I'll try to read words now!" << std::endl;
 
 	int n;
-	if(!(std::cin >> n)) {
+	if (!(std::cin >> n)) {
 		throw std::runtime_error("fack");
 	}
 

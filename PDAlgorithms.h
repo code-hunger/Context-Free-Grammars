@@ -28,9 +28,9 @@ bool operator<(StackBottomChar const&, StackBottomChar const&) { return false; }
 
 const StackBottomChar bottom;
 
-template <typename C>
+template <typename C, typename CPtrBox>
 inline AlphabetToupleDistinct<C, StackBottomChar>
-extendAlphabet(const std::shared_ptr<AlphabetLike<C>> alphabet)
+extendAlphabet(const std::shared_ptr<AlphabetLike<C, CPtrBox>> alphabet)
 {
 
 	AlphabetToupleDistinct<C, StackBottomChar> stackAlphabet{
@@ -41,11 +41,13 @@ extendAlphabet(const std::shared_ptr<AlphabetLike<C>> alphabet)
 	return stackAlphabet;
 }
 
-template <typename CN, typename CT>
-auto grammarToAutomata(CFGrammarTouple<CT, CN> const& grammar)
+template <typename CN, typename CT, typename CPtrBox>
+auto grammarToAutomata(CFGrammarTouple<CN, CT, CPtrBox> const& grammar)
 {
-	AlphabetToupleDistinct stackAlphabet = extendAlphabet<typename decltype(
-	    grammar.alphabets)::element_type::char_type>(grammar.alphabets);
+	AlphabetToupleDistinct stackAlphabet = extendAlphabet<
+	    typename decltype(grammar.alphabets)::element_type::char_type,
+	    typename decltype(grammar.alphabets)::element_type::char_box_type>(
+	    grammar.alphabets);
 
 	using CStack = typename decltype(stackAlphabet)::char_type;
 	using CStackPtrBox = typename decltype(stackAlphabet)::char_box_type;
@@ -69,21 +71,26 @@ auto grammarToAutomata(CFGrammarTouple<CT, CN> const& grammar)
 
 	start.addTransition(
 	    CStack{bottom}, std::nullopt,
-	    std::make_shared<Push<CStack, CStackPtrBox>>(CStack{*grammar.start}),
+	    std::make_shared<Push<CStack, CStackPtrBox>>(CN{*grammar.start}),
 	    wild);
 
 	for (auto const& rule : grammar.rules) {
 		auto replacor = rule.to;
 		std::string properlyTypedCopy;
-		rule.to.for_each([&properlyTypedCopy](LetterChar const& c) {
-			properlyTypedCopy.push_back(c.value);
+
+		rule.to.for_each([&properlyTypedCopy](CPtrBox c) {
+			std::ostringstream s;
+			//decltype(c)::dada;
+			const auto &x = *c;
+			x.print(s);
+			properlyTypedCopy += s.str();
 		});
 
 		auto realReplacor = AlphaString<CStack, CStackPtrBox>::parseString(
 		    stackAlphabetPtr, properlyTypedCopy);
 
 		wild.addTransition(
-		    CStack{rule.from}, std::nullopt,
+		    CharUnion<CN,CT>{rule.from}, std::nullopt,
 		    std::make_shared<Replace<CStack, CStackPtrBox>>(
 		        std::make_shared<AlphaString<CStack, CStackPtrBox>>(
 		            realReplacor)),
@@ -93,7 +100,7 @@ auto grammarToAutomata(CFGrammarTouple<CT, CN> const& grammar)
 	auto popCmd = std::make_shared<Pop<CStack, CStackPtrBox>>();
 
 	grammar.alphabets->T->for_each([&wild, &popCmd](CT const& c) mutable {
-		wild.addTransition(CStack{c}, c, popCmd, wild);
+		wild.addTransition(CharUnion<CN,CT>{c}, c, popCmd, wild);
 	});
 
 	wild.addTransition(CStack{bottom}, {}, popCmd, accept);

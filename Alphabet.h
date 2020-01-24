@@ -28,9 +28,22 @@ struct LetterChar : Char
 
 	void print(std::ostream& out) const override { out << value; }
 
-	friend bool operator==(LetterChar a, LetterChar b)
+	bool operator==(LetterChar const& other)
 	{
-		return a.value == b.value;
+		return value == other.value;
+	}
+};
+
+struct BigLetterChar : private LetterChar {
+	using LetterChar::value;
+
+	BigLetterChar(char c) : LetterChar(c) {}
+
+	void print(std::ostream& out) const override { out << '{' << value << '}'; }
+
+	bool operator==(BigLetterChar const& other)
+	{
+		return value == other.value;
 	}
 };
 
@@ -40,6 +53,12 @@ inline bool operator<(LetterChar const& a, LetterChar const& b)
 }
 
 inline std::ostream& operator<<(std::ostream& out, LetterChar const& c)
+{
+	c.print(out);
+	return out;
+}
+
+inline std::ostream& operator<<(std::ostream& out, BigLetterChar const& c)
 {
 	c.print(out);
 	return out;

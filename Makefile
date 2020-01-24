@@ -31,7 +31,7 @@ $(shell mkdir -p $(dir $(DEPS)) >/dev/null)
 # C compiler
 CC := clang
 # C++ compiler
-CXX := gccfilter -c -a g++
+CXX := clang++
 # linker
 LD := g++
 # tar

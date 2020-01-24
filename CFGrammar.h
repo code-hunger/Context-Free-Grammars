@@ -10,7 +10,7 @@
 
 namespace context_free {
 
-template <typename CT, typename CN = CT> struct Rule
+template <typename CN, typename CT, typename CPtrBox> struct Rule
 {
 	using C = std::conditional<std::is_same_v<CT, CN>, CN, CharUnion<CT, CN>>;
 
@@ -18,20 +18,20 @@ template <typename CT, typename CN = CT> struct Rule
 	using ToType = typename C::type;
 
 	const FromType& from;
-	const AlphaString<ToType> to;
+	const AlphaString<ToType, CPtrBox> to;
 
-	Rule(const FromType& from, AlphaString<ToType>&& to)
+	Rule(const FromType& from, AlphaString<ToType, CPtrBox>&& to)
 	    : from(from), to(std::move(to))
 	{
 	}
 };
 
-template <typename CT, typename CN> struct GrammarTouple
+template <typename CN, typename CT, typename CPtrBox> struct GrammarTouple
 {
-	const shared_ptr<AlphabetToupleDistinct<CT, CN>> alphabets;
+	const shared_ptr<AlphabetToupleDistinct<CN, CT>> alphabets;
 
 	const CN* start;
-	const std::vector<Rule<CT, CN>> rules;
+	const std::vector<Rule<CN, CT, CPtrBox>> rules;
 
 	GrammarTouple(decltype(alphabets) alphabets, CN const& start,
 	              decltype(rules) rules)
@@ -58,10 +58,10 @@ static bool all_of(T const& container, P const& predicate)
 	return std::all_of(container.begin(), container.end(), predicate);
 }
 
-template <typename CT, typename CN>
-struct CFGrammarTouple : GrammarTouple<CT, CN>
+template <typename CN, typename CT, typename CPtrBox>
+struct CFGrammarTouple : GrammarTouple<CN, CT, CPtrBox>
 {
-	using parent = GrammarTouple<CT, CN>;
+	using parent = GrammarTouple<CN, CT, CPtrBox>;
 
 	CFGrammarTouple(decltype(parent::alphabets) alphabets, CN const& start,
 	                decltype(parent::rules) rules)
