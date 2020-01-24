@@ -35,26 +35,42 @@ auto createMeatBalls()
 	return meatBalls;
 }
 
-int main()
+template <typename CN, typename CT>
+auto readGrammarFromInput(std::shared_ptr<AlphabetLike<CN>> variables,
+                          std::shared_ptr<AlphabetLike<CT>> terminals)
 {
-	const std::string terminals = "abcde", variables = "SABCD";
-
 	CFGrammarTouple grammar = parseGrammar(
 	    std::cin,
 	    std::make_shared<AlphabetToupleDistinct<LetterChar, LetterChar>>(
-	        toSharedAlphabet(variables), toSharedAlphabet(terminals)));
+	        variables, terminals));
 
-	auto& alphabets = grammar.alphabets;
-
-	std::cout << "Non-termianls: " << *alphabets->N << std::endl;
-	std::cout << "Termianls: " << *alphabets->T << std::endl;
+	std::cout << "Non-termianls: " << *grammar.alphabets->N << std::endl;
+	std::cout << "Termianls: " << *grammar.alphabets->T << std::endl;
 
 	for (auto& rule : grammar.rules) {
 		std::cout << "The grammar has a rule from " << rule.from << " to "
 		          << rule.to << std::endl;
 	}
 
-	const auto automata = grammarToAutomata(grammar);
+	return grammar;
+}
+
+int main()
+{
+	const std::string variables1 = "SABCD";
+	const std::string variables2 = "EFGH";
+
+	auto termAlph = toSharedAlphabet("abcde");
+
+	const auto a1 =
+	    grammarToAutomata(readGrammarFromInput<LetterChar, LetterChar>(
+	        toSharedAlphabet(variables1), termAlph));
+	/*const auto a2 =
+	    grammarToAutomata(readGrammarFromInput<LetterChar, LetterChar>(
+			toSharedAlphabet(variables2), termAlph));*/
+
+	auto& automata = a1;
+	// auto joined = automataUnion(a1, a2);
 
 	std::cout << "Start: " << automata.start.human_name << std::endl;
 
@@ -66,12 +82,12 @@ int main()
 	std::cout << "I'll try to read words now!" << std::endl;
 
 	int n;
-	if(!(std::cin >> n)) {
+	if (!(std::cin >> n)) {
 		throw std::runtime_error("fack");
 	}
 
 	while (!streamFinished(std::cin)) {
-		auto word = parseString(std::cin, alphabets->T);
+		auto word = parseString(std::cin, termAlph);
 
 		std::cout << "From input I got '";
 		word.print(std::cout);

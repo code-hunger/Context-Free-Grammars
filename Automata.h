@@ -30,6 +30,23 @@ struct Automata
 		    std::make_unique<BottomedStack<CStack, CStackPtrBox>>(stackAlphabet,
 		                                                          bottom)};
 	}
+
+	bool operator<<(std::string str) const
+	{
+		auto reader = createReader(str, LetterChar{'#'});
+
+		bool found = false;
+		for (int i = 0; i < 100; ++i) {
+			const auto result = reader.advance();
+
+			if (result.finished) {
+				found = result.acceptingState.has_value();
+				break;
+			}
+		}
+
+		return found;
+	}
 };
 
 } // namespace context_free

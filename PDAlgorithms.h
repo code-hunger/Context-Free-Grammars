@@ -102,6 +102,90 @@ auto grammarToAutomata(CFGrammarTouple<CT, CN> const& grammar)
 	    stackAlphabetPtr, grammar.alphabets->T, std::move(meatBalls), start};
 }
 
-template <typename A1, typename A2> auto automataUnion(A1 const&, A2 const&) {}
+template <typename T> auto joinTwoContainers(T const& a, T const& b)
+{
+	T joined;
+	for (auto& x : a) {
+		joined.emplace_front(x);
+	}
+	for (auto& x : b) {
+		joined.emplace_front(x);
+	}
+	return joined;
+}
+
+template <typename CStackA, typename CStackAPtrBox, typename CStackB,
+          typename CStackBPtrBox, typename CTerminal>
+auto automataUnion(Automata<CStackA, CTerminal, CStackAPtrBox> const& a,
+                   Automata<CStackB, CTerminal, CStackBPtrBox> const& b)
+{
+	auto alphabet = AlphabetToupleDistinct<CStackA, CStackB>{*a.stackAlphabet,
+	                                                         *b.stackAlphabet};
+
+	using CStack = typename decltype(alphabet)::char_type;
+	using CStackPtrBox = typename decltype(alphabet)::char_box_type;
+
+	auto meatBalls = joinTwoContainers(a.meatBalls, b.meatBalls);
+
+	meatBalls.emplace_front("Joined start");
+	auto& newStart = meatBalls.front();
+
+	newStart.addTransition(CStack{bottom}, std::nullopt,
+	                       std::make_shared<Sleep<CStack, CStackPtrBox>>(),
+	                       a.start);
+
+	newStart.addTransition(CStack{bottom}, std::nullopt,
+	                       std::make_shared<Sleep<CStack, CStackPtrBox>>(),
+	                       b.start);
+
+	return Automata{alphabet, a.wordAlphabet, meatBalls, &newStart};
+}
+
+template <typename CStackA, typename CStackAPtrBox, typename CStackB,
+          typename CStackBPtrBox, typename CTerminal>
+auto automataConcat(Automata<CStackA, CTerminal, CStackAPtrBox> const& a,
+                    Automata<CStackB, CTerminal, CStackBPtrBox> const& b)
+{
+	auto alphabet = AlphabetToupleDistinct<CStackA, CStackB>{*a.stackAlphabet,
+	                                                         *b.stackAlphabet};
+
+	using CStack = typename decltype(alphabet)::char_type;
+	using CStackPtrBox = typename decltype(alphabet)::char_box_type;
+
+	auto meatBalls = joinTwoContainers(a.meatBalls, b.meatBalls);
+
+	for (auto& s : a.finals) {
+		s.addTransition(CStack{bottom}, std::nullopt,
+		                std::make_shared<Sleep<CStack, CStackPtrBox>>(),
+		                b.start);
+	}
+
+	return Automata{alphabet, a.wordAlphabet, meatBalls, &meatBalls.front()};
+}
+
+template <typename CStackA, typename CStackAPtrBox, typename CStackB,
+          typename CStackBPtrBox, typename CTerminal>
+auto automataIterate(Automata<CStackA, CTerminal, CStackAPtrBox> const& a)
+{
+	auto alphabet = a.stackAlphabet;
+	using CStack = typename decltype(alphabet)::char_type;
+	using CStackPtrBox = typename decltype(alphabet)::char_box_type;
+
+	auto meatBalls{a.meatBalls};
+
+	meatBalls.front().addTransition(CStack{bottom}, std::nullopt,
+	                       std::make_shared<Sleep<CStack, CStackPtrBox>>(),
+	                       meatBalls.front());
+
+
+	for (auto& s : meatBalls) {
+		if (s.isFinal)
+			s.addTransition(CStack{bottom}, std::nullopt,
+			                std::make_shared<Pop<CStack, CStackPtrBox>>(),
+			                a.start);
+	}
+
+	return Automata{alphabet, a.wordAlphabet, meatBalls, &meatBalls.front()};
+}
 
 } // namespace context_free

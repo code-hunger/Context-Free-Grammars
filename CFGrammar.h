@@ -50,6 +50,8 @@ template <typename CT, typename CN> struct GrammarTouple
 
 	GrammarTouple(GrammarTouple const&) = delete;
 	auto operator=(GrammarTouple const&) = delete;
+
+	GrammarTouple(GrammarTouple && other) = default;
 };
 
 template <typename T, typename P>
@@ -62,6 +64,11 @@ template <typename CT, typename CN>
 struct CFGrammarTouple : GrammarTouple<CT, CN>
 {
 	using parent = GrammarTouple<CT, CN>;
+
+	CFGrammarTouple(CFGrammarTouple const&) = delete;
+	auto operator=(CFGrammarTouple const&) = delete;
+
+	CFGrammarTouple(CFGrammarTouple && other) = default;
 
 	CFGrammarTouple(decltype(parent::alphabets) alphabets, CN const& start,
 	                decltype(parent::rules) rules)
